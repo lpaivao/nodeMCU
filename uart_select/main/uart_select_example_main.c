@@ -17,7 +17,7 @@
 #include "esp_vfs.h"
 #include "esp_vfs_dev.h"
 #include "driver/uart.h"
-//#include "esp8266/gpio_register.h"
+#include "esp8266/gpio_register.h"
 #include "driver/gpio.h"
 #include "driver/adc.h"
 
@@ -62,33 +62,32 @@ void sendData(){
     free(data);
 }
 
+void configGPIO(gpio_config_t *gpio_config_var, gpio_num_t GPIO_NUMBER, gpio_mode_t modeIO){
+    gpio_config_var->mode = modeIO;
+    gpio_config(&gpio_config_var);
+}
+
 void setup_GPIOs(){
 
-    gpio_config_t gpio14;
-    gpio_config(&gpio14);   //D5
-    gpio_set_direction(GPIO_NUM_14, GPIO_MODE_INPUT);
+    gpio_config_t *gpio14;
+    configGPIO(gpio14, GPIO_NUM_14, GPIO_MODE_INPUT);   //D5
 
-    gpio_config_t gpio12;
-    gpio_config(&gpio12);   //D6
-    gpio_set_direction(GPIO_NUM_12, GPIO_MODE_INPUT);
-    
-    gpio_config_t gpio13;
-    gpio_config(&gpio13);   //D7
-    gpio_set_direction(GPIO_NUM_13, GPIO_MODE_INPUT);
+    gpio_config_t *gpio12;
+    configGPIO(gpio12, GPIO_NUM_12, GPIO_MODE_INPUT);   //D6
 
-    gpio_config_t gpio15;
-    gpio_config(&gpio15);   //D8
-    gpio_set_direction(GPIO_NUM_15, GPIO_MODE_INPUT);
+    gpio_config_t *gpio13;
+    configGPIO(gpio13, GPIO_NUM_13, GPIO_MODE_INPUT);   //D7
+
+    gpio_config_t *gpio15;
+    configGPIO(gpio15, GPIO_NUM_15, GPIO_MODE_INPUT);   //D8
 
 // -------------------------------------------------------------------
 
-    gpio_config_t gpio3;
-    gpio_config(&gpio3);   //RX
-    gpio_set_direction(GPIO_NUM_3, GPIO_MODE_OUTPUT);
+    gpio_config_t *gpio3;
+    configGPIO(gpio3, GPIO_NUM_3, GPIO_MODE_INPUT);     //RX
 
-    gpio_config_t gpio1;
-    gpio_config(&gpio1);   //TX
-    gpio_set_direction(GPIO_NUM_1, GPIO_MODE_OUTPUT);
+    gpio_config_t *gpio1;
+    configGPIO(gpio1, GPIO_NUM_1, GPIO_MODE_OUTPUT);    //TX
 
 
     // 1. init adc (A0)
@@ -119,21 +118,27 @@ void uart0_init(void) {
 }
 
 
-void protocolosRequisicao(uint8_t comando, uint_fast8_t enderecoSensor){
+bool protocolosRequisicao(uint8_t comando, uint_fast8_t enderecoSensor){
 
     //uint8_t offset = GPIO_REG_READ(enderecoSensor); //calcula PERIPHS_GPIO_BASEADDR + enderecoSensor
 
     if(comando == SITUACAO_ATUAL_NODE){
+        return true;
     }
     else if(comando == SOLICITA_ENTRADA_ANALOGICA){
+        return true;
     }
     else if(comando == SOLICITA_ENTRADA_DIGITAL){
+        return true;
     }
     else if(comando == ACENDE_LED){
+        return true;
     }
+    else
+        return false;
 }
 
-void protocolosResposta(uint8_t resposta){
+uint_fast8_t protocolosResposta(uint8_t resposta){
 
     if(resposta == NODE_COM_PROBLEMA){
     }
@@ -143,15 +148,24 @@ void protocolosResposta(uint8_t resposta){
     }
     else if(resposta == ESTADO_ENTRADA_DIGITAL){
     }
+    else{
+        
+    }
 }
 
-void testeSensor(uint8_t address){
+void testeSensor(uint8_t address, gpio_config_t *gpio){
 
     if(address == GPIO_PIN14_ADDRESS){
         gpio_get_level(GPIO_NUM_14);
     }
     else if(address == GPIO_PIN12_ADDRESS){    
-        gpio_get_level(GPIO_NUM_14);
+        gpio_get_level(GPIO_NUM_12);
+    }
+    else if(address == GPIO_PIN13_ADDRESS){    
+        gpio_get_level(GPIO_NUM_13);
+    }
+    else if(address == GPIO_PIN15_ADDRESS){    
+        gpio_get_level(GPIO_NUM_15);
     }
 }
 
