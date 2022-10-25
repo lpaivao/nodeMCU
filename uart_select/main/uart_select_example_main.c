@@ -64,23 +64,30 @@ void sendData(){
 
 void setup_GPIOs(){
 
-    gpio_config(GPIO_NUM_14);   //D5
+    gpio_config_t gpio14;
+    gpio_config(&gpio14);   //D5
     gpio_set_direction(GPIO_NUM_14, GPIO_MODE_INPUT);
 
-    gpio_config(GPIO_NUM_12);   //D6
+    gpio_config_t gpio12;
+    gpio_config(&gpio12);   //D6
     gpio_set_direction(GPIO_NUM_12, GPIO_MODE_INPUT);
     
-    gpio_config(GPIO_NUM_13);   //D7
+    gpio_config_t gpio13;
+    gpio_config(&gpio13);   //D7
     gpio_set_direction(GPIO_NUM_13, GPIO_MODE_INPUT);
 
-    gpio_config(GPIO_NUM_15);   //D8
-    gpio_set_direction(GPIO_NUM_16, GPIO_MODE_INPUT);
+    gpio_config_t gpio15;
+    gpio_config(&gpio15);   //D8
+    gpio_set_direction(GPIO_NUM_15, GPIO_MODE_INPUT);
 
 // -------------------------------------------------------------------
-    gpio_config(GPIO_NUM_3);   //RX
+
+    gpio_config_t gpio3;
+    gpio_config(&gpio3);   //RX
     gpio_set_direction(GPIO_NUM_3, GPIO_MODE_OUTPUT);
 
-    gpio_config(GPIO_NUM_1);   //TX
+    gpio_config_t gpio1;
+    gpio_config(&gpio1);   //TX
     gpio_set_direction(GPIO_NUM_1, GPIO_MODE_OUTPUT);
 
 
@@ -112,27 +119,21 @@ void uart0_init(void) {
 }
 
 
-bool protocolosRequisicao(uint8_t comando, uint_fast8_t enderecoSensor){
+void protocolosRequisicao(uint8_t comando, uint_fast8_t enderecoSensor){
 
-    uint8_t offset = GPIO_REG_READ(enderecoSensor); //calcula PERIPHS_GPIO_BASEADDR + enderecoSensor
+    //uint8_t offset = GPIO_REG_READ(enderecoSensor); //calcula PERIPHS_GPIO_BASEADDR + enderecoSensor
 
     if(comando == SITUACAO_ATUAL_NODE){
-        return true;
     }
     else if(comando == SOLICITA_ENTRADA_ANALOGICA){
-        return true;
     }
     else if(comando == SOLICITA_ENTRADA_DIGITAL){
-        return true;
     }
     else if(comando == ACENDE_LED){
-        return true;
     }
-    else
-        return false;
 }
 
-uint_fast8_t protocolosResposta(uint8_t resposta){
+void protocolosResposta(uint8_t resposta){
 
     if(resposta == NODE_COM_PROBLEMA){
     }
@@ -141,9 +142,6 @@ uint_fast8_t protocolosResposta(uint8_t resposta){
     else if(resposta == MEDIDA_ENTRADA_ANALOGICA){
     }
     else if(resposta == ESTADO_ENTRADA_DIGITAL){
-    }
-    else{
-        
     }
 }
 
