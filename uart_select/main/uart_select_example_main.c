@@ -147,6 +147,14 @@ void configGPIO(gpio_config_t io_conf, uint32_t pin_bit_mask, gpio_mode_t mode){
 
 }
 
+void configADC(adc_config_t adc_config){
+    // Depend on menuconfig->Component config->PHY->vdd33_const value
+    // When measuring system voltage(ADC_READ_VDD_MODE), vdd33_const must be set to 255.
+    adc_config.mode = ADC_READ_TOUT_MODE;
+    adc_config.clk_div = 8; // ADC sample collection clock = 80MHz/clk_div = 10MHz
+    ESP_ERROR_CHECK(adc_init(&adc_config));
+}
+
 void app_main() {
 
     uart0_init();
@@ -155,13 +163,8 @@ void app_main() {
     configGPIO(gpio14, GPIO_Pin_14, GPIO_MODE_OUTPUT);
 
     // 1. init adc (A0)
-    adc_config_t adc_config;   //A0
-
-    // Depend on menuconfig->Component config->PHY->vdd33_const value
-    // When measuring system voltage(ADC_READ_VDD_MODE), vdd33_const must be set to 255.
-    adc_config.mode = ADC_READ_TOUT_MODE;
-    adc_config.clk_div = 8; // ADC sample collection clock = 80MHz/clk_div = 10MHz
-    ESP_ERROR_CHECK(adc_init(&adc_config));
+    adc_config_t adc_config;
+    configADC(adc_config);
 
     printf("Driver is installed on UART0: ");
     if(uart_is_driver_installed(UART_NUM_0) == true){
