@@ -35,9 +35,9 @@ enum sensor_type
 
 enum codes
 {
-  READ_DIGITAL = 0x5,
-  READ_ANALOG = 0x4,
-  NODE_STATUS = 0x3
+  READ_DIGITAL = 'D',
+  READ_ANALOG = 'A',
+  NODE_STATUS = 'S'
 };
 
 // Estrutura contendo as referencias para uso de um sensor, tipo, funcão de leitura e configuração
@@ -97,7 +97,7 @@ void ota_startup()
   // Configuração do IP fixo no roteador, se não conectado, imprime mensagem de falha
   if (!WiFi.config(local_IP, gateway, subnet))
   {
-    Serial.println("STA Failed to configure");
+    uart_write(uart0, "STA Failed to configure", 23);
   }
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -163,12 +163,11 @@ void setupSensorMaps()
 
 void setup()
 {
-  // Serial.begin(BAUDUART0);
   uart0 = uart_init(UART0, BAUDUART0, UART_8N1, 0, 1, 10, 0);
-  Serial.println("Booting");
+  uart_write(uart0, "\nBooting\r\n", 6);
   // ota_startup();
   setupSensorMaps();
-  Serial.println("Ready");
+  uart_write(uart0, "\nReady\r\n", 6);
 }
 
 char *recByte = (char *)malloc(sizeof(char) * 2);
@@ -177,32 +176,31 @@ int addr = 0;
 void loop()
 {
   // ArduinoOTA.handle();
-  // if (Serial.available() > 0) {
-  //   Serial.print(Serial.read());
-  // }
   while ((int)uart_rx_available(uart0) > 0)
   {
-    Serial.readBytes(recByte, 2);
+    uart_read(uart0, recByte, 2);
+    uart_flush(uart0);
     switch (recByte[0])
     {
     case NODE_STATUS:
-      Serial.printf("[STATUS] NodeMCU status report code recieved\n");
+      uart_write(uart0, "STATUS\r\n", 8);
       break;
     case READ_ANALOG:
-      addr = recByte[1];
+      addr = recByte[1] - '0';
       if (addr >= analog_sensors.installed)
       {
         break;
       }
-      Serial.printf("[ READ ] A0: %d\n", analogRead(analog_sensors.sensors[addr]->pin));
+      uart_write(uart0, "ANALOG\r\n", 8);
       break;
     case READ_DIGITAL:
-      addr = recByte[1];
+      addr = recByte[1] - '0';
       if (addr >= digital_sensors.installed)
       {
         break;
       }
-      Serial.printf("[ READ ] D: %d\n", digitalRead(digital_sensors.sensors[addr]->pin));
+      uart_write(uart0, "DIGITAL\r\n", 9);
+      uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
       break;
     default:
       Serial.printf("[ NONE ] Skipping ...\n");
