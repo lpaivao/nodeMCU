@@ -8,7 +8,7 @@
 
 #ifndef STASSID
 #define STASSID "INTELBRAS"
-#define STAPSK  "Pbl-Sistemas-Digitais"
+#define STAPSK "Pbl-Sistemas-Digitais"
 #endif
 
 #define BAUDUART0 115200
@@ -35,9 +35,9 @@ enum sensor_type
 
 enum codes
 {
-  READ_DIGITAL = 0x41,
-  READ_ANALOG = 0x42,
-  NODE_STATUS = 0x43
+  READ_DIGITAL = 0x5,
+  READ_ANALOG = 0x4,
+  NODE_STATUS = 0x3
 };
 
 // Estrutura contendo as referencias para uso de um sensor, tipo, funcão de leitura e configuração
@@ -45,7 +45,7 @@ typedef struct
 {
   enum sensor_type type;
   int (*read)(int), last_read, pin;
-  bool (*set)(int);
+  // bool (*set)(int);
 } sensor;
 
 // Estrutura de mapeamento de sensores
@@ -56,11 +56,13 @@ typedef struct
   sensor *sensors[16];
 } sensor_map;
 
+uart_t *uart0;
+
 sensor_map digital_sensors, analog_sensors;
 
 int readDigitalSensor(int pin)
 {
-  return digitalRead(pin);
+  return GPIO_INPUT_GET(pin);
 }
 
 int readAnalogSensor(int pin)
@@ -68,32 +70,26 @@ int readAnalogSensor(int pin)
   return analogRead(pin);
 }
 
-bool setDigitalSensor(int pin)
-{
-  digitalWrite(pin, HIGH);
-  return false;
-}
-
 sensor DS0 = {
     DIGITAL,
     readDigitalSensor,
     0,
     D0,
-    setDigitalSensor,
+    // setDigitalSensor,
 };
 sensor DS1 = {
     DIGITAL,
     readDigitalSensor,
     0,
     D5,
-    setDigitalSensor,
+    // setDigitalSensor,
 };
 sensor AS0 = {
     ANALOG,
     readAnalogSensor,
     0,
     A0,
-    setDigitalSensor,
+    // setDigitalSensor,
 };
 
 void ota_startup()
@@ -167,7 +163,8 @@ void setupSensorMaps()
 
 void setup()
 {
-  Serial.begin(BAUDUART0);
+  // Serial.begin(BAUDUART0);
+  uart0 = uart_init(UART0, BAUDUART0, UART_8N1, 0, 1, 10, 0);
   Serial.println("Booting");
   // ota_startup();
   setupSensorMaps();
@@ -183,7 +180,7 @@ void loop()
   // if (Serial.available() > 0) {
   //   Serial.print(Serial.read());
   // }
-  while (Serial.available() > 0)
+  while ((int)uart_rx_available(uart0) > 0)
   {
     Serial.readBytes(recByte, 2);
     switch (recByte[0])
@@ -192,7 +189,7 @@ void loop()
       Serial.printf("[STATUS] NodeMCU status report code recieved\n");
       break;
     case READ_ANALOG:
-      addr = recByte[1] - 0x30;
+      addr = recByte[1];
       if (addr >= analog_sensors.installed)
       {
         break;
@@ -200,7 +197,7 @@ void loop()
       Serial.printf("[ READ ] A0: %d\n", analogRead(analog_sensors.sensors[addr]->pin));
       break;
     case READ_DIGITAL:
-      addr = recByte[1] - 0x30;
+      addr = recByte[1];
       if (addr >= digital_sensors.installed)
       {
         break;
