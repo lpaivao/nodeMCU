@@ -74,14 +74,14 @@ sensor DS0 = {
     DIGITAL,
     readDigitalSensor,
     0,
-    D0,
+    D1,
     // setDigitalSensor,
 };
 sensor DS1 = {
     DIGITAL,
     readDigitalSensor,
     0,
-    D5,
+    D2,
     // setDigitalSensor,
 };
 sensor AS0 = {
@@ -161,6 +161,14 @@ void setupSensorMaps()
   }
 }
 
+void gpioSetup()
+{
+  // pinMode(D0, OUTPUT);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO4_U, FUNC_GPIO4);
+  gpio_init();
+}
+
 void setup()
 {
   uart0 = uart_init(UART0, BAUDUART0, UART_8N1, 0, 1, 10, 0);
@@ -199,8 +207,10 @@ void loop()
       {
         break;
       }
-      uart_write(uart0, "DIGITAL\r\n", 9);
-      uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
+      uart_write(uart0, "DIGITAL ", 8);
+      // uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
+      uart_write_char(uart0, GPIO_INPUT_GET(D1)+'0');
+      uart_write_char(uart0, '\n');
       break;
     default:
       Serial.printf("[ NONE ] Skipping ...\n");
