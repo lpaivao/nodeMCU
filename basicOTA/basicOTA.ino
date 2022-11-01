@@ -67,7 +67,7 @@ int readDigitalSensor(int pin)
 
 int readAnalogSensor(int pin)
 {
-  return analogRead(pin);
+  return (int)system_adc_read();
 }
 
 sensor DS0 = {
@@ -198,9 +198,10 @@ void loop()
       }
       uart_write(uart0, "ANALOG ", 7);
       char val[10];
-      itoa(analog_sensors.sensors[addr]->read(analog_sensors.sensors[addr]->pin), val, DEC);
-      uart_write(uart0, (const char *)val, strlen(val));
-      uart_write_char(uart0, '\n');
+      ets_uart_printf("%d\n", analog_sensors.sensors[addr]->read(A0));
+      // itoa(analog_sensors.sensors[addr]->read(analog_sensors.sensors[addr]->pin), val, DEC);
+      // uart_write(uart0, (const char *)val, strlen(val));
+      // uart_write_char(uart0, '\n');
       break;
     case READ_DIGITAL:
       addr = recByte[1] - '0';
