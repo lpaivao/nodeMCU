@@ -74,14 +74,14 @@ sensor DS0 = {
     DIGITAL,
     readDigitalSensor,
     0,
-    D1,
+    16,
     // setDigitalSensor,
 };
 sensor DS1 = {
     DIGITAL,
     readDigitalSensor,
     0,
-    D2,
+    D1,
     // setDigitalSensor,
 };
 sensor AS0 = {
@@ -165,7 +165,7 @@ void setup()
 {
   uart0 = uart_init(UART0, BAUDUART0, UART_8N1, 0, 1, 10, 0);
   uart_write(uart0, "\nBooting\r\n", 6);
-  // ota_startup();
+  ota_startup();
   setupSensorMaps();
   uart_write(uart0, "\nReady\r\n", 6);
 }
@@ -175,7 +175,7 @@ int addr = 0;
 
 void loop()
 {
-  // ArduinoOTA.handle();
+  ArduinoOTA.handle();
   while ((int)uart_rx_available(uart0) >= 2)
   {
     uart_read(uart0, recByte, 2);
@@ -199,10 +199,6 @@ void loop()
       uart_write(uart0, "ANALOG ", 7);
       char val[10];
       ets_uart_printf("%d\n", analog_sensors.sensors[addr]->read(A0));
-      // itoa(analog_sensors.sensors[addr]->read(analog_sensors.sensors[addr]->pin), val, DEC);
-      // uart_write(uart0, (const char *)val, strlen(val));
-      // uart_write_char(uart0, '\n');
-      break;
     case READ_DIGITAL:
       addr = recByte[1] - '0';
       if (addr >= digital_sensors.installed)
