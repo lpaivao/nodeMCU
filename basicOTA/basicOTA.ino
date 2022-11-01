@@ -161,14 +161,6 @@ void setupSensorMaps()
   }
 }
 
-void gpioSetup()
-{
-  // pinMode(D0, OUTPUT);
-  PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5);
-  PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO4_U, FUNC_GPIO4);
-  gpio_init();
-}
-
 void setup()
 {
   uart0 = uart_init(UART0, BAUDUART0, UART_8N1, 0, 1, 10, 0);
@@ -184,13 +176,18 @@ int addr = 0;
 void loop()
 {
   // ArduinoOTA.handle();
-  while ((int)uart_rx_available(uart0) > 0)
+  while ((int)uart_rx_available(uart0) >= 2)
   {
     uart_read(uart0, recByte, 2);
     uart_flush(uart0);
     switch (recByte[0])
     {
     case NODE_STATUS:
+      addr = recByte[1] - '0';
+      if (addr >= 3)
+      {
+        break;
+      }
       uart_write(uart0, "STATUS\r\n", 8);
       break;
     case READ_ANALOG:
@@ -199,7 +196,11 @@ void loop()
       {
         break;
       }
-      uart_write(uart0, "ANALOG\r\n", 8);
+      uart_write(uart0, "ANALOG ", 7);
+      char val[10];
+      itoa(analog_sensors.sensors[addr]->read(analog_sensors.sensors[addr]->pin), val, DEC);
+      uart_write(uart0, (const char *)val, strlen(val));
+      uart_write_char(uart0, '\n');
       break;
     case READ_DIGITAL:
       addr = recByte[1] - '0';
@@ -208,8 +209,8 @@ void loop()
         break;
       }
       uart_write(uart0, "DIGITAL ", 8);
-      // uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
-      uart_write_char(uart0, GPIO_INPUT_GET(D1)+'0');
+      uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
+      // uart_write_char(uart0, GPIO_INPUT_GET(D1)+'0');
       uart_write_char(uart0, '\n');
       break;
     default:
