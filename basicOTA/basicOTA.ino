@@ -6,9 +6,21 @@
 #include <gpio.h>
 #include <uart.h>
 
+// COMANDOS DE REQUISIÇÃO
+#define SITUACAO_ATUAL_NODE 0x03
+#define SOLICITA_ENTRADA_ANALOGICA 0x04
+#define SOLICITA_ENTRADA_DIGITAL 0x05
+#define ACENDE_LED 0x06
+
+// COMANDOS DE RESPOSTA
+#define NODE_COM_PROBLEMA 0x1F
+#define NODE_FUNCIONANDO 0x00
+#define MEDIDA_ENTRADA_ANALOGICA 0x01
+#define ESTADO_ENTRADA_DIGITAL 0x02
+
 #ifndef STASSID
 #define STASSID "INTELBRAS"
-#define STAPSK  "Pbl-Sistemas-Digitais"
+#define STAPSK "Pbl-Sistemas-Digitais"
 #endif
 
 #define BAUDUART0 115200
@@ -35,9 +47,9 @@ enum sensor_type
 
 enum codes
 {
-  READ_DIGITAL = 0x41,
-  READ_ANALOG = 0x42,
-  NODE_STATUS = 0x43
+  READ_DIGITAL = 'A',
+  READ_ANALOG = 'B',
+  NODE_STATUS = 'C'
 };
 
 // Estrutura contendo as referencias para uso de um sensor, tipo, funcão de leitura e configuração
@@ -45,7 +57,7 @@ typedef struct
 {
   enum sensor_type type;
   int (*read)(int), last_read, pin;
-  bool (*set)(int);
+  // bool (*set)(int);
 } sensor;
 
 // Estrutura de mapeamento de sensores
@@ -56,11 +68,13 @@ typedef struct
   sensor *sensors[16];
 } sensor_map;
 
+uart_t *uart0;
+
 sensor_map digital_sensors, analog_sensors;
 
 int readDigitalSensor(int pin)
 {
-  return digitalRead(pin);
+  return GPIO_INPUT_GET(pin);
 }
 
 int readAnalogSensor(int pin)
@@ -68,32 +82,26 @@ int readAnalogSensor(int pin)
   return analogRead(pin);
 }
 
-bool setDigitalSensor(int pin)
-{
-  digitalWrite(pin, HIGH);
-  return false;
-}
-
 sensor DS0 = {
     DIGITAL,
     readDigitalSensor,
     0,
-    D0,
-    setDigitalSensor,
+    GPIO_PIN_ADDR(16),
+    // setDigitalSensor,
 };
 sensor DS1 = {
     DIGITAL,
     readDigitalSensor,
     0,
-    D5,
-    setDigitalSensor,
+    GPIO_PIN_ADDR(5),
+    // setDigitalSensor,
 };
 sensor AS0 = {
     ANALOG,
     readAnalogSensor,
     0,
-    A0,
-    setDigitalSensor,
+    GPIO_PIN_ADDR(17),
+    // setDigitalSensor,
 };
 
 void ota_startup()
@@ -156,25 +164,36 @@ void setupSensorMaps()
   for (int i = 2; i < digital_sensors.total; i++)
   {
     digital_sensors.sensors[i] = &DS0;
-  }
+  } 
   analog_sensors.type = ANALOG;
   analog_sensors.installed = 1;
-  for (int i = 0; i < analog_sensors.total; i++)
-  {
-    analog_sensors.sensors[i] = &AS0;
-  }
+  analog_sensors.sensors[0] = &AS0;
+ // for (int i = 0; i < analog_sensors.total; i++)
+ // {
+}
+
+void gpioSetup()
+{
+  // pinMode(D0, OUTPUT);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO5_U, GPIO_IN_ADDRESS);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO4_U, GPIO_IN_ADDRESS);
+  gpio_init();
 }
 
 void setup()
 {
-  Serial.begin(BAUDUART0);
-  Serial.println("Booting");
+  // Serial.begin(BAUDUART0);
+  uart0 = uart_init(UART0, BAUDUART0, UART_8N1, 0, 1, 10, 0);
+
+  ets_uart_printf("\nBooting\r\n");
   // ota_startup();
   setupSensorMaps();
-  Serial.println("Ready");
+  ets_uart_printf("Ready\r\n");
+  ets_install_uart_printf();
 }
 
 char *recByte = (char *)malloc(sizeof(char) * 2);
+char *sendByte = (char *)malloc(sizeof(char) * 1);
 int addr = 0;
 
 void loop()
@@ -183,34 +202,56 @@ void loop()
   // if (Serial.available() > 0) {
   //   Serial.print(Serial.read());
   // }
-  while (Serial.available() > 0)
+  while ((int)uart_rx_available(uart0) > 0)
   {
-    Serial.readBytes(recByte, 2);
+
+    uart_read(uart0, recByte, 2);
+         
     switch (recByte[0])
     {
     case NODE_STATUS:
-      Serial.printf("[STATUS] NodeMCU status report code recieved\n");
+      ets_uart_printf("Status Request:\n");
+      ets_putc('\n');
       break;
     case READ_ANALOG:
-      addr = recByte[1] - 0x30;
+      addr = recByte[1] - '0';
       if (addr >= analog_sensors.installed)
       {
+      ets_uart_printf("[ERROR] Analog Sensor\n");
+      ets_putc('\n');
         break;
       }
-      Serial.printf("[ READ ] A0: %d\n", analogRead(analog_sensors.sensors[addr]->pin));
+      ets_uart_printf("Analog Sensor:\n");
+      ets_putc('\n');
       break;
     case READ_DIGITAL:
-      addr = recByte[1] - 0x30;
+      addr = recByte[1];
       if (addr >= digital_sensors.installed)
       {
+        ets_uart_printf("[ERROR] Digital Sensor\n");
+        ets_putc('\n');
         break;
       }
-      Serial.printf("[ READ ] D: %d\n", digitalRead(digital_sensors.sensors[addr]->pin));
+      if (addr = GPIO_PIN_ADDR(16))
+      {
+        ets_uart_printf("Digital Sensor (1):\nLevel: ");
+        uart_write_char(uart0, GPIO_INPUT_GET(16) + '0');
+      }
+      else if (addr = GPIO_PIN_ADDR(5))
+      {
+        ets_uart_printf("Digital Sensor (2):\nLevel: ");
+        uart_write_char(uart0, GPIO_INPUT_GET(5) + '0');
+      }
+
+      ets_putc('\n');
+      ets_putc('\n');
+
       break;
     default:
-      Serial.printf("[ NONE ] Skipping ...\n");
+      ets_uart_printf("None\n");
+      ets_putc('\n');
       break;
     }
+    uart_flush(uart0);
   }
-  // delay(5);
 }
