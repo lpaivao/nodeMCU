@@ -210,11 +210,10 @@ void loop()
       }
       uart_write(uart0, "DIGITAL ", 8);
       uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
-      // uart_write_char(uart0, GPIO_INPUT_GET(D1)+'0');
       uart_write_char(uart0, '\n');
       break;
     default:
-      Serial.printf("[ NONE ] Skipping ...\n");
+      uart_write(uart0, "[ NONE ] Skipping ...\n", 23);
       break;
     }
   }
