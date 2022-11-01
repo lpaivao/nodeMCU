@@ -232,12 +232,12 @@ void loop()
         ets_putc('\n');
         break;
       }
-      if (addr = GPIO_PIN_ADDR(16))
+      if (addr == GPIO_PIN_ADDR(16))
       {
         ets_uart_printf("Digital Sensor (1):\nLevel: ");
         uart_write_char(uart0, GPIO_INPUT_GET(16) + '0');
       }
-      else if (addr = GPIO_PIN_ADDR(5))
+      else if (addr == GPIO_PIN_ADDR(5))
       {
         ets_uart_printf("Digital Sensor (2):\nLevel: ");
         uart_write_char(uart0, GPIO_INPUT_GET(5) + '0');
