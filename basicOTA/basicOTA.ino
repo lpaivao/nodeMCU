@@ -183,7 +183,7 @@ void loop()
       {
         break;
       }
-      uart_write(uart0, "STATUS\r\n", 8);
+      uart_write_char(uart0, NODE_NORMAL);
       break;
     case READ_ANALOG:
       addr = recByte[1] - '0';
@@ -191,7 +191,7 @@ void loop()
       {
         break;
       }
-      uart_write(uart0, "ANALOG ", 7);
+      uart_write_char(uart0, ANALOG_READ);
       char val[10];
       ets_uart_printf("%d\n", analog_sensors.sensors[addr]->read(A0));
     case READ_DIGITAL:
@@ -200,12 +200,12 @@ void loop()
       {
         break;
       }
-      uart_write(uart0, "DIGITAL ", 8);
+      uart_write_char(uart0, DIGITAL_READ);
       uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
       uart_write_char(uart0, '\n');
       break;
     case LED_TOGGLE:
-      
+      // TODO: implementar função de acender led
       break;
     case '\r':
     case '\n':
