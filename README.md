@@ -17,7 +17,14 @@ O sistema será comandado por um Single Board Computer (SBC), e deve ser capaz d
 		</p>
 	</div>
  
- 
+
+<div id="image11" style="display: inline_block" align="center">
+		<img src="/imagens/diagramadet.png"/><br>
+		<p>
+		Diagrama Detalhado
+		</p>
+	</div>
+	
 ## Kit de Desenvolvimento
 <div id="image11" style="display: inline_block" align="center">
 		<img src="/imagens/kitdev.jpg"/><br>
@@ -142,3 +149,11 @@ No problema, a comunicação funciona da seguinte forma: a Raspbery envia comand
 | 0x00  | NodeMCU funcionando normalmente |
 | 0x01  | Medida da entrada analógica |
 | 0x02  | Estado da entrada digital |
+
+## Ambiente de desenvolvimento
+
+### *Arduino IDE*
+A IDE foi configurada de forma a instalar e configurar todas as dependências, bibliotecas e funcionalidades para o uso do NodeMCU. Entretanto, nenhuma função própria do Arduino (com exceção das configurações para o OTA) foi utilizada. Todo o código foi desenvolvido em linguagem C.
+
+### *Visual Studio Code* (VSCode)
+Esse editor de texto foi utilizado somente para a escrita do código em C, que posteriormente seria introduzido no código do *Arduino IDE* para a compilação no sketch.
