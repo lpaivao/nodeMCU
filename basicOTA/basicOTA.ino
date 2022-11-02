@@ -6,6 +6,8 @@
 #include <gpio.h>
 #include <uart.h>
 
+#include "commands.h"
+
 #ifndef STASSID
 #define STASSID "INTELBRAS"
 #define STAPSK "Pbl-Sistemas-Digitais"
@@ -31,13 +33,6 @@ enum sensor_type
 {
   DIGITAL,
   ANALOG
-};
-
-enum codes
-{
-  READ_DIGITAL = 'D',
-  READ_ANALOG = 'A',
-  NODE_STATUS = 'S'
 };
 
 // Estrutura contendo as referencias para uso de um sensor, tipo, funcão de leitura e configuração
@@ -97,13 +92,13 @@ void ota_startup()
   // Configuração do IP fixo no roteador, se não conectado, imprime mensagem de falha
   if (!WiFi.config(local_IP, gateway, subnet))
   {
-    uart_write(uart0, "STA Failed to configure", 23);
+    ets_uart_printf("STA Failed to configure");
   }
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED)
   {
-    Serial.println("Connection Failed! Rebooting...");
+    ets_uart_printf("Connection Failed! Rebooting...\n");
     delay(5000);
     ESP.restart();
   }
@@ -118,29 +113,29 @@ void ota_startup()
     }
 
     // NOTE: if updating FS this would be the place to unmount FS using FS.end()
-    Serial.println("Start updating " + type); });
+    ets_uart_printf("Start updating %s\n", type); });
   ArduinoOTA.onEnd([]()
-                   { Serial.println("\nEnd"); });
+                   { ets_uart_printf("\nEnd\n"); });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)
-                        { Serial.printf("Progress: %u%%\r", (progress / (total / 100))); });
+                        { ets_uart_printf("Progress: %u%%\r", (progress / (total / 100))); });
   ArduinoOTA.onError([](ota_error_t error)
                      {
-    Serial.printf("Error[%u]: ", error);
+    ets_uart_printf("Error[%u]: ", error);
     if (error == OTA_AUTH_ERROR) {
-      Serial.println("Auth Failed");
+      ets_uart_printf("Auth Failed\n");
     } else if (error == OTA_BEGIN_ERROR) {
-      Serial.println("Begin Failed");
+      ets_uart_printf("Begin Failed\n");
     } else if (error == OTA_CONNECT_ERROR) {
-      Serial.println("Connect Failed");
+      ets_uart_printf("Connect Failed\n");
     } else if (error == OTA_RECEIVE_ERROR) {
-      Serial.println("Receive Failed");
+      ets_uart_printf("Receive Failed\n");
     } else if (error == OTA_END_ERROR) {
-      Serial.println("End Failed");
+      ets_uart_printf("End Failed\n");
     } });
   ArduinoOTA.begin();
-  Serial.println("Ready");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  ets_uart_printf("Ready\n");
+  ets_uart_printf("IP address: %s\n");
+  // Serial.println(WiFi.localIP());
 }
 
 void setupSensorMaps()
@@ -208,6 +203,12 @@ void loop()
       uart_write(uart0, "DIGITAL ", 8);
       uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
       uart_write_char(uart0, '\n');
+      break;
+    case LED_TOGGLE:
+      
+      break;
+    case '\r':
+    case '\n':
       break;
     default:
       uart_write(uart0, "[ NONE ] Skipping ...\n", 23);
