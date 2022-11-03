@@ -16,6 +16,12 @@
 #define BAUDUART0 115200
 #define BAUDUART1 115200
 
+#ifdef __TESTING__
+#define LED_PIN 14
+#else
+#define LED_PIN LED_BUILTIN
+#endif
+
 const char *ssid = STASSID;
 const char *password = STAPSK;
 
@@ -69,7 +75,7 @@ sensor DS0 = {
     DIGITAL,
     readDigitalSensor,
     0,
-    16,
+    D0,
     // setDigitalSensor,
 };
 sensor DS1 = {
@@ -134,8 +140,7 @@ void ota_startup()
     } });
   ArduinoOTA.begin();
   ets_uart_printf("Ready\n");
-  ets_uart_printf("IP address: %s\n");
-  // Serial.println(WiFi.localIP());
+  ets_uart_printf("IP address: %s\n", WiFi.localIP());
 }
 
 void setupSensorMaps()
@@ -156,13 +161,28 @@ void setupSensorMaps()
   }
 }
 
+bool evalAddr(int *addr, int limit)
+{
+#ifdef __TESTING__
+  *addr = *addr - '0';
+#endif
+  if (*addr >= limit)
+  {
+    return false;
+  }
+  return true;
+}
+
 void setup()
 {
   uart0 = uart_init(UART0, BAUDUART0, UART_8N1, 0, 1, 10, 0);
   uart_write(uart0, "\nBooting\r\n", 6);
+#ifndef __TESTING__
   ota_startup();
+#endif
   setupSensorMaps();
   uart_write(uart0, "\nReady\r\n", 6);
+  // pinMode(14, OUTPUT);
 }
 
 char *recByte = (char *)malloc(sizeof(char) * 2);
@@ -170,20 +190,21 @@ int addr = 0;
 
 void loop()
 {
+#ifndef __TESTING__
   ArduinoOTA.handle();
+#endif
   while ((int)uart_rx_available(uart0) >= 2)
   {
     uart_read(uart0, recByte, 2);
+    addr = recByte[1];
     uart_flush(uart0);
     switch (recByte[0])
     {
     case NODE_STATUS:
-      addr = recByte[1] - '0';
-      if (addr >= 3)
-      {
-        break;
-      }
       uart_write_char(uart0, NODE_NORMAL);
+#ifdef __TESTING__
+      uart_write_char(uart0, '\n');
+#endif
       break;
     case READ_ANALOG:
       addr = recByte[1] - '0';
@@ -192,8 +213,11 @@ void loop()
         break;
       }
       uart_write_char(uart0, ANALOG_READ);
-      char val[10];
-      ets_uart_printf("%d\n", analog_sensors.sensors[addr]->read(A0));
+      ets_uart_printf("%d", analog_sensors.sensors[addr]->read(A0));
+#ifdef __TESTING__
+      uart_write_char(uart0, '\n');
+#endif
+      break;
     case READ_DIGITAL:
       addr = recByte[1] - '0';
       if (addr >= digital_sensors.installed)
@@ -202,18 +226,28 @@ void loop()
       }
       uart_write_char(uart0, DIGITAL_READ);
       uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
+#ifdef __TESTING__
       uart_write_char(uart0, '\n');
+#endif
       break;
     case LED_TOGGLE:
-      // TODO: implementar função de acender led
+      addr = recByte[1] - '0';
+      if (addr >= 2)
+      {
+        break;
+      }
+      GPIO_OUTPUT_SET(LED_PIN, addr);
+      uart_write_char(uart0, NODE_NORMAL);
+#ifdef __TESTING__
+      uart_write_char(uart0, '\n');
+#endif
       break;
     case '\r':
     case '\n':
       break;
     default:
-      uart_write(uart0, "[ NONE ] Skipping ...\n", 23);
+      ets_uart_printf("[ NONE ] Skipping ...\n");
       break;
     }
   }
-  // delay(5);
 }
