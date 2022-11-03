@@ -24,9 +24,11 @@
 // ENDEREÇO DO SENSOR
 
 #define GPIO_PIN0_ADDRESS 0x28
-#define GPIO_PIN_ADDR(i) (GPIO_PIN0_ADDRESS + (i*4))
+#define SENSOR_NUM(i) (GPIO_PIN0_ADDRESS + (i*4))
 
 #define PERIPHS_GPIO_BASEADDR 0x60000300
+
+#define SENSOR_NUM(i) i
 
 int main()
 {
@@ -80,6 +82,9 @@ void menu(int uart0_filestream){
 	char *respostaNode;
 	respostaNode = (char *) malloc(2);
 
+	char *strReq;
+	char strReq = (char *) malloc(2);
+
     int opcao;
     printf("Digite a opcao:\n");
     printf("1 - Situação atual do node:\n");
@@ -93,23 +98,26 @@ void menu(int uart0_filestream){
 
     switch(opcao){
         case 1:
-            uart_tx(SITUACAO_ATUAL_NODE, uart0_filestream);
+			strReq[0] = MEDIDA_ENTRADA_ANALOGICA;
+            uart_tx(strReq, uart0_filestream);
 			usleep(100000); //delay 0.1 segundos
 			uart_rx(uart0_filestream, respostaNode);
-			if(respostaNode == NODE_FUNCIONANDO){
+			if(respostaNode[0] == NODE_FUNCIONANDO){
 				sendNodeFuncionando();
 			}
-			else if(respostaNode == NODE_COM_PROBLEMA){
+			else if(respostaNode[0] == NODE_COM_PROBLEMA){
 				sendNodeProblema();
 			}
 			else
 				sendErro();	
             break;
         case 2:
-            uart_tx(MEDIDA_ENTRADA_ANALOGICA + GPIO_PIN_ADDR(17), uart0_filestream);
+			strReq[0] = MEDIDA_ENTRADA_ANALOGICA;
+			strReq[1] = SENSOR_NUM(0);
+            uart_tx(strReq, uart0_filestream);
 			usleep(100000); //delay 0.1 segundos
 			uart_rx(uart0_filestream, respostaNode);
-			if(respostaNode != NULL || respostaNode != '\0'){
+			if(respostaNode[0] != NULL || respostaNode != '\0'){
 				sendEntradaAnalogica(respostaNode);
 			}
 			else
@@ -126,10 +134,15 @@ void menu(int uart0_filestream){
     }
 
 	free(respostaNode);
+	free(strReq);
 
 }
 
 void escolhaDigital(int uart0_filestream, char *respostaNode){
+
+	char *strReq;
+	char strReq = (char *) malloc(2);
+
     int digital;
     printf("Digite a entrada digital desejada:\n");
     printf("0 - Digital 0 (D0)\n");
@@ -140,20 +153,24 @@ void escolhaDigital(int uart0_filestream, char *respostaNode){
     switch (digital)
     {
     case 0:
-        uart_tx(ESTADO_ENTRADA_DIGITAL + GPIO_PIN_ADDR(16), uart0_filestream);
+		strReq[0] = ESTADO_ENTRADA_DIGITAL;
+		strReq[1] = SENSOR_NUM(0);
+        uart_tx(strReq, uart0_filestream);
 		usleep(100000); //delay 0.1 segundos
 		uart_rx(uart0_filestream, respostaNode);
-		if(respostaNode != NULL || respostaNode != '\0'){
+		if(respostaNode[0] != NULL || respostaNode[0] != '\0'){
 			sendEntradaDigital(respostaNode);
 		}
 		else
 			sendErro();
         break;
     case 1:
-        uart_tx(ESTADO_ENTRADA_DIGITAL + GPIO_PIN_ADDR(5), uart0_filestream);
+		strReq[0] = ESTADO_ENTRADA_DIGITAL;
+		strReq[1] = SENSOR_NUM(1);
+        uart_tx(strReq, uart0_filestream);
 		usleep(100000); //delay 0.1 segundos
 		uart_rx(uart0_filestream, respostaNode);
-		if(respostaNode != NULL || respostaNode != '\0'){
+		if(respostaNode[0] != NULL || respostaNode[0] != '\0'){
 				sendEntradaDigital(respostaNode);
 		}
 		else
@@ -226,7 +243,7 @@ void uart_rx(int uart0_filestream, unsigned char *respostaNode){
 void uart_config(int uart0_filestream){
     struct termios options;
 	tcgetattr(uart0_filestream, &options);
-	options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;		//<Set baud rate
+	options.c_cflag = B115200 | CS8 | CLOCAL | CREAD;		//<Set baud rate
 	options.c_iflag = IGNPAR;
 	options.c_oflag = 0;
 	options.c_lflag = 0;
@@ -259,15 +276,11 @@ void sendNodeProblema(){
 }
 
 void sendEntradaAnalogica(char *valorAnalogico){
-	int i = 0;
-	while(i < strlen(valorAnalogico)){
-		_sendChar(valorAnalogico[i]);
-		i++;
-	}
+	_sendChar(valorAnalogico[1]);
 }
 
 void sendEntradaDigital(char *estado){
-	_sendChar(estado);
+	_sendChar(estado[1]);
 }
 
 void sendErro(){
