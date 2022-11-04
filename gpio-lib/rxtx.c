@@ -16,6 +16,8 @@
 #define ADDR_1 1
 #endif
 
+#define SLEEP_TIME_S 1
+
 int main(int argc, char const *argv[])
 {
     int serial_port = open(argv[1], O_RDWR);
@@ -71,6 +73,7 @@ int main(int argc, char const *argv[])
             write(serial_port, command[i], sizeof(command[i]));
             usleep(10);
         }
+        sleep(SLEEP_TIME_S);
     }
 
     // Save tty settings, also checking for error
