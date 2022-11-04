@@ -249,21 +249,6 @@ void menu()
 	if (uart0_filestream = !-1)
 	{
 		printf("uart0_filestream passou...\n");
-	}
-
-	free(strReqDig);
-}
-
-void menu()
-{
-
-	int uart0_filestream;
-	uart_start(uart0_filestream);
-	printf("Uart iniciada...\n");
-
-	if (uart0_filestream = !-1)
-	{
-		printf("uart0_filestream passou...\n");
 
 		char *respostaNode;
 		respostaNode = (char *)malloc(2);
