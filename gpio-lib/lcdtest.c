@@ -30,133 +30,6 @@
 
 #define SENSOR_NUM(i) i
 
-int main()
-{
-    _lcdStartup();
-    _clearDisplay();
-    _turnOnCursorOn();
-    _setMemoryMode();
-
-	while(1){
-		menu();
-	}
-
-	return 0;
-    
-}
-
-void menu(){
-
-	int uart0_filestream;
-	uart_start(uart0_filestream);
-
-	if(uart0_filestream =! -1){
-
-	char *respostaNode;
-	respostaNode = (char *) malloc(2);
-
-	char *strReq;
-	char strReq = (char *) malloc(2);
-
-    int opcao;
-    printf("Digite a opcao:\n");
-    printf("1 - Situação atual do node:\n");
-    printf("2 - Valor da entrada analogica:\n");
-    printf("3 - Valor de uma das entradas digitais:\n");
-    printf("4 - Acendimento do led:\n");
-
-    scanf("%i", &opcao);
-
-	_clearDisplay();
-
-    switch(opcao){
-        case 1:
-			strReq[0] = MEDIDA_ENTRADA_ANALOGICA;
-            uart_tx(strReq, uart0_filestream);
-			usleep(100000); //delay 0.1 segundos
-			uart_rx(uart0_filestream, respostaNode);
-			if(respostaNode[0] == NODE_FUNCIONANDO){
-				sendNodeFuncionando();
-			}
-			else if(respostaNode[0] == NODE_COM_PROBLEMA){
-				sendNodeProblema();
-			}
-			else
-				sendErro();	
-            break;
-        case 2:
-			strReq[0] = MEDIDA_ENTRADA_ANALOGICA;
-			strReq[1] = SENSOR_NUM(0);
-            uart_tx(strReq, uart0_filestream);
-			usleep(100000); //delay 0.1 segundos
-			uart_rx(uart0_filestream, respostaNode);
-			if(respostaNode[0] != NULL || respostaNode != '\0'){
-				sendEntradaAnalogica(respostaNode);
-			}
-			else
-				sendErro();
-            break;
-        case 3:
-            escolhaDigital(uart0_filestream, respostaNode);
-            break;
-        case 4:
-            break;
-        default:
-            printf("Digite uma opcao valida\n");
-            break;
-    }
-	free(respostaNode);
-	free(strReq);
-	}
-	close(uart0_filestream);
-}
-
-void escolhaDigital(int uart0_filestream, char *respostaNode){
-
-	char *strReq;
-	char strReq = (char *) malloc(2);
-
-    int digital;
-    printf("Digite a entrada digital desejada:\n");
-    printf("0 - Digital 0 (D0)\n");
-    printf("1 - Digital 1 (D1)\n");
-
-    scanf("%i", &digital);
-
-    switch (digital)
-    {
-    case 0:
-		strReq[0] = ESTADO_ENTRADA_DIGITAL;
-		strReq[1] = SENSOR_NUM(0);
-        uart_tx(strReq, uart0_filestream);
-		usleep(100000); //delay 0.1 segundos
-		uart_rx(uart0_filestream, respostaNode);
-		if(respostaNode[0] != NULL || respostaNode[0] != '\0'){
-			sendEntradaDigital(respostaNode);
-		}
-		else
-			sendErro();
-        break;
-    case 1:
-		strReq[0] = ESTADO_ENTRADA_DIGITAL;
-		strReq[1] = SENSOR_NUM(1);
-        uart_tx(strReq, uart0_filestream);
-		usleep(100000); //delay 0.1 segundos
-		uart_rx(uart0_filestream, respostaNode);
-		if(respostaNode[0] != NULL || respostaNode[0] != '\0'){
-				sendEntradaDigital(respostaNode);
-		}
-		else
-			sendErro();
-        break;
-    default:
-        printf("Digite uma opcao valida\n");
-        break;
-    }
-
-	free(strReq);
-}
-
 //Funcao que envia os dados na UART
 void uart_tx(char* tx_string, int uart0_filestream){
 	if (uart0_filestream != -1){//Se abriu o arquivo da UART
@@ -243,6 +116,27 @@ void sendErro(){
 	_sendChar('O');
 }
 
+//CONFIGURE THE UART
+//The flags (defined in /usr/include/termios.h - see http://pubs.opengroup.org/onlinepubs/007908799/xsh/termios.h.html):
+//	Baud rate:- B1200, B2400, B4800, B9600, B19200, B38400, B57600, B115200, B230400, B460800, B500000, B576000, B921600, B1000000, B1152000, B1500000, B2000000, B2500000, B3000000, B3500000, B4000000
+//	CSIZE:- CS5, CS6, CS7, CS8
+//	CLOCAL - Ignore modem status lines
+//	CREAD - Enable receiver
+//	IGNPAR = Ignore characters with parity errors
+//	ICRNL - Map CR to NL on input (Use for ASCII comms where you want to auto correct end of line characters - don't use for bianry comms!)
+//	PARENB - Parity enable
+//	PARODD - Odd parity (else even)
+void uart_config(int uart0_filestream){
+    struct termios options;
+	tcgetattr(uart0_filestream, &options);
+	options.c_cflag = B115200 | CS8 | CLOCAL | CREAD;		//<Set baud rate
+	options.c_iflag = IGNPAR;
+	options.c_oflag = 0;
+	options.c_lflag = 0;
+	tcflush(uart0_filestream, TCIFLUSH);
+	tcsetattr(uart0_filestream, TCSANOW, &options);
+}
+
 void uart_start(int uart0_filestream){
 
 	 //-------------------------
@@ -274,23 +168,131 @@ void uart_start(int uart0_filestream){
 		uart_config(uart0_filestream);
 }
 
-//CONFIGURE THE UART
-//The flags (defined in /usr/include/termios.h - see http://pubs.opengroup.org/onlinepubs/007908799/xsh/termios.h.html):
-//	Baud rate:- B1200, B2400, B4800, B9600, B19200, B38400, B57600, B115200, B230400, B460800, B500000, B576000, B921600, B1000000, B1152000, B1500000, B2000000, B2500000, B3000000, B3500000, B4000000
-//	CSIZE:- CS5, CS6, CS7, CS8
-//	CLOCAL - Ignore modem status lines
-//	CREAD - Enable receiver
-//	IGNPAR = Ignore characters with parity errors
-//	ICRNL - Map CR to NL on input (Use for ASCII comms where you want to auto correct end of line characters - don't use for bianry comms!)
-//	PARENB - Parity enable
-//	PARODD - Odd parity (else even)
-void uart_config(int uart0_filestream){
-    struct termios options;
-	tcgetattr(uart0_filestream, &options);
-	options.c_cflag = B115200 | CS8 | CLOCAL | CREAD;		//<Set baud rate
-	options.c_iflag = IGNPAR;
-	options.c_oflag = 0;
-	options.c_lflag = 0;
-	tcflush(uart0_filestream, TCIFLUSH);
-	tcsetattr(uart0_filestream, TCSANOW, &options);
+
+void escolhaDigital(int uart0_filestream, char *respostaNode){
+
+	char *strReqDig;
+	strReqDig = (char *) malloc(2);
+
+    int digital;
+    printf("Digite a entrada digital desejada:\n");
+    printf("0 - Digital 0 (D0)\n");
+    printf("1 - Digital 1 (D1)\n");
+
+    scanf("%i", &digital);
+
+    switch (digital)
+    {
+    case 0:
+		strReqDig[0] = ESTADO_ENTRADA_DIGITAL;
+		strReqDig[1] = SENSOR_NUM(0);
+        uart_tx(strReqDig, uart0_filestream);
+		usleep(100000); //delay 0.1 segundos
+		uart_rx(uart0_filestream, respostaNode);
+		if(respostaNode[0] != NULL || respostaNode[0] != '\0'){
+			sendEntradaDigital(respostaNode);
+		}
+		else
+			sendErro();
+        break;
+    case 1:
+		strReqDig[0] = ESTADO_ENTRADA_DIGITAL;
+		strReqDig[1] = SENSOR_NUM(1);
+        uart_tx(strReqDig, uart0_filestream);
+		usleep(100000); //delay 0.1 segundos
+		uart_rx(uart0_filestream, respostaNode);
+		if(respostaNode[0] != NULL || respostaNode[0] != '\0'){
+				sendEntradaDigital(respostaNode);
+		}
+		else
+			sendErro();
+        break;
+    default:
+        printf("Digite uma opcao valida\n");
+        break;
+    }
+
+	free(strReqDig);
 }
+
+void menu(){
+
+	int uart0_filestream;
+	uart_start(uart0_filestream);
+
+	if(uart0_filestream =! -1){
+
+	char *respostaNode;
+	respostaNode = (char *) malloc(2);
+
+	char *strReq;
+	strReq = (char *) malloc(2);
+
+    int opcao;
+    printf("Digite a opcao:\n");
+    printf("1 - Situação atual do node:\n");
+    printf("2 - Valor da entrada analogica:\n");
+    printf("3 - Valor de uma das entradas digitais:\n");
+    printf("4 - Acendimento do led:\n");
+
+    scanf("%i", &opcao);
+
+	_clearDisplay();
+
+    switch(opcao){
+        case 1:
+			strReq[0] = MEDIDA_ENTRADA_ANALOGICA;
+            uart_tx(strReq, uart0_filestream);
+			usleep(100000); //delay 0.1 segundos
+			uart_rx(uart0_filestream, respostaNode);
+			if(respostaNode[0] == NODE_FUNCIONANDO){
+				sendNodeFuncionando();
+			}
+			else if(respostaNode[0] == NODE_COM_PROBLEMA){
+				sendNodeProblema();
+			}
+			else
+				sendErro();	
+            break;
+        case 2:
+			strReq[0] = MEDIDA_ENTRADA_ANALOGICA;
+			strReq[1] = SENSOR_NUM(0);
+            uart_tx(strReq, uart0_filestream);
+			usleep(100000); //delay 0.1 segundos
+			uart_rx(uart0_filestream, respostaNode);
+			if(respostaNode[0] != NULL || respostaNode[0] != '\0'){
+				sendEntradaAnalogica(respostaNode);
+			}
+			else
+				sendErro();
+            break;
+        case 3:
+            escolhaDigital(uart0_filestream, respostaNode);
+            break;
+        case 4:
+            break;
+        default:
+            printf("Digite uma opcao valida\n");
+            break;
+    }
+	free(respostaNode);
+	free(strReq);
+	}
+	close(uart0_filestream);
+}
+
+int main()
+{
+    _lcdStartup();
+    _clearDisplay();
+    _turnOnCursorOn();
+    _setMemoryMode();
+
+	while(1){
+		menu();
+	}
+
+	return 0;
+    
+}
+
