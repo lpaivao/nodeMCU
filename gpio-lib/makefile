@@ -17,7 +17,7 @@ BASEAS=as -o $@ $<
 raspdois: lcdtest2 clean
 lcdtest2: lcdtest2.o 1602minidrv.o
 	gcc $(COMPOPTS) -o $(COMPOUTPUT) $+
-lcdtest2.o: lcdtest.s
+lcdtest2.o: lcdtest.c
 	gcc -g -c -o $@ $<
 1602minidrv.o: 1602minidrv.s
 	as -o $@ $< $(ASPIDOIS)
