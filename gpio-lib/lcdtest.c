@@ -45,27 +45,20 @@ void uart_tx(char *tx_string, int uart0_filestream)
 	}
 	else
 	{
-		printf("\nFalha na abertura do arquivo");
+		printf("\nFalha na abertura do arquivo\n");
 	}
 }
 
-void uart_rx(int uart0_filestream, unsigned char *respostaNode)
+void uart_rx(int uart0_filestream, char *respostaNode)
 {
-
-	int rx_length;
 	int count = 0;
-
-	int i;
 
 	//----- CHECK FOR ANY RX BYTES -----
 	if (uart0_filestream != -1)
 	{
-		// Variável que vai receber os bits do buffer RX
-		char c;
-
 		// Passa o bit do RX para a variável c, e depois de c para a string de resposta
-		//  for(count = 0; count < sizeof(respostaNode); i++){
-		rx_length = read(uart0_filestream, respostaNode, 2); // Filestream, buffer to store in, number of bytes to read (max)
+		//  for(count = 0; count < sizeof(respostaNode); count++){
+		int rx_length = read(uart0_filestream, respostaNode, 2); // Filestream, buffer to store in, number of bytes to read (max)
 		// respostaNode[i] = c;
 		// if(c == '\n')
 		// break;
@@ -73,7 +66,7 @@ void uart_rx(int uart0_filestream, unsigned char *respostaNode)
 
 		if (rx_length < 0)
 		{
-			printf("An error occured (will occur if there are no bytes)\n");
+			printf("An error occured\n");
 		}
 		else if (rx_length == 0)
 		{
@@ -115,12 +108,25 @@ void sendNodeProblema()
 
 void sendEntradaAnalogica(char *valorAnalogico)
 {
-	_sendChar(valorAnalogico[1]);
+	//_sendChar(valorAnalogico[1]);
+	_sendChar('A');
+	_sendChar('N');
+	_sendChar('A');
+	_sendChar('L');
+	_sendChar('O');
+	_sendChar('G');
 }
 
 void sendEntradaDigital(char *estado)
 {
-	_sendChar(estado[1]);
+	//_sendChar(estado[1]);
+	_sendChar('D');
+	_sendChar('I');
+	_sendChar('G');
+	_sendChar('I');
+	_sendChar('T');
+	_sendChar('A');
+	_sendChar('L');
 }
 
 void sendErro()
@@ -151,7 +157,6 @@ void uart_config(int uart0_filestream)
 	options.c_lflag = 0;
 	tcflush(uart0_filestream, TCIFLUSH);
 	tcsetattr(uart0_filestream, TCSANOW, &options);
-	printf("Uart configurada!\n");
 }
 
 void uart_start(int uart0_filestream)
@@ -160,16 +165,16 @@ void uart_start(int uart0_filestream)
 	//-------------------------
 	//----- SETUP USART 0 -----
 	//-------------------------
+
 	// At bootup, pins 8 and 10 are already set to UART0_TXD, UART0_RXD (ie the alt0 function) respectively
 	uart0_filestream = -1;
 
-	// OPEN THE UART
-	// The flags (defined in fcntl.h):
+	// 	OPEN THE UART
+	// 	The flags (defined in fcntl.h):
 	//	Access modes (use 1 of these):
 	//	O_RDONLY - Open for reading only.
 	//	O_RDWR - Open for reading and writing.
 	//	O_WRONLY - Open for writing only.
-	//
 	//	O_NDELAY / O_NONBLOCK (same function) - Enables nonblocking mode. When set read requests on the file can return immediately with a failure status
 	//											if there is no input immediately available (instead of blocking). Likewise, write requests can also return
 	//											immediately with a failure status if the output can't be written immediately.
@@ -180,12 +185,10 @@ void uart_start(int uart0_filestream)
 	if (uart0_filestream == -1)
 	{
 		// ERROR - CAN'T OPEN SERIAL PORT
-		printf("Error - Unable to open UART.  Ensure it is not in use by another application\n");
+		printf("Error - Unable to open UART. Ensure it is not in use by another application\n");
 	}
 	else
 	{
-		printf("Uart Aberta!\n");
-		printf("Configurando Uart...\n");
 		uart_config(uart0_filestream);
 	}
 }
@@ -193,8 +196,7 @@ void uart_start(int uart0_filestream)
 void escolhaDigital(int uart0_filestream, char *respostaNode)
 {
 
-	char *strReqDig;
-	strReqDig = (char *)malloc(2*sizeof(char));
+	char requisicaoRaspDigital[2];
 
 	int digital;
 	printf("Digite a entrada digital desejada:\n");
@@ -206,15 +208,18 @@ void escolhaDigital(int uart0_filestream, char *respostaNode)
 	switch (digital)
 	{
 	case 0:
-		strReqDig[0] = ESTADO_ENTRADA_DIGITAL;
-		strReqDig[1] = SENSOR_NUM(0);
-		char string[2];
-		string[0]='a';
-		string[1]='b';
-		uart_tx(string, uart0_filestream);
+		requisicaoRaspDigital[0] = SOLICITA_ENTRADA_DIGITAL;
+		requisicaoRaspDigital[1] = SENSOR_NUM(0);
+
+		printf("tx a mandar: %s\n", requisicaoRasp);
+		uart_tx(requisicaoRaspDigital, uart0_filestream);
+
 		usleep(100000); // delay 0.1 segundos
+
 		uart_rx(uart0_filestream, respostaNode);
-		if ((respostaNode[0] != NULL) || (respostaNode[0] != '\0'))
+		printf("rx lido: %s\n", respostaNode);
+		
+		if ((respostaNode[0] == MEDIDA_ENTRADA_DIGITAL))
 		{
 			sendEntradaDigital(respostaNode);
 		}
@@ -222,12 +227,18 @@ void escolhaDigital(int uart0_filestream, char *respostaNode)
 			sendErro();
 		break;
 	case 1:
-		strReqDig[0] = ESTADO_ENTRADA_DIGITAL;
-		strReqDig[1] = SENSOR_NUM(1);
-		uart_tx(strReqDig, uart0_filestream);
+		requisicaoRaspDigital[0] = SOLICITA_ENTRADA_DIGITAL;
+		requisicaoRaspDigital[1] = SENSOR_NUM(1);
+
+		printf("tx a mandar: %s\n", requisicaoRasp);
+		uart_tx(requisicaoRaspDigital, uart0_filestream);
+
 		usleep(100000); // delay 0.1 segundos
+		
 		uart_rx(uart0_filestream, respostaNode);
-		if ((respostaNode[0] != NULL) || (respostaNode[0] != '\0'))
+		printf("rx lido: %s\n", respostaNode);
+		
+		if ((respostaNode[0] == MEDIDA_ENTRADA_DIGITAL))
 		{
 			sendEntradaDigital(respostaNode);
 		}
@@ -239,7 +250,7 @@ void escolhaDigital(int uart0_filestream, char *respostaNode)
 		break;
 	}
 
-	free(strReqDig);
+	free(requisicaoRaspDigital);
 }
 
 void menu()
@@ -247,17 +258,14 @@ void menu()
 
 	int uart0_filestream;
 	uart_start(uart0_filestream);
-	printf("Uart iniciada...\n");
 
 	if (uart0_filestream != -1)
 	{
-		printf("uart0_filestream passou...\n");
+		char respostaNode[2];
+		//respostaNode = (char *)malloc(2*sizeof(char));
 
-		char *respostaNode;
-		respostaNode = (char *)malloc(2*sizeof(char));
-
-		char *strReq;
-		strReq = (char *)malloc(2*sizeof(char));
+		char requisicaoRasp[2];
+		//requisicaoRasp = (char *)malloc(2*sizeof(char));
 
 		int opcao;
 		printf("Digite a opcao:\n");
@@ -273,11 +281,17 @@ void menu()
 		switch (opcao)
 		{
 		case 1:
-			strReq[0] = MEDIDA_ENTRADA_ANALOGICA;
-			strReq[1] = 'G';
-			uart_tx(strReq, uart0_filestream);
+			requisicaoRasp[0] = SITUACAO_ATUAL_NODE;
+			requisicaoRasp[1] = 'G';
+
+			printf("tx a mandar: %s\n", requisicaoRasp);
+			uart_tx(requisicaoRasp, uart0_filestream);
+
 			usleep(100000); // delay 0.1 segundos
+
 			uart_rx(uart0_filestream, respostaNode);
+			printf("rx lido: %s\n", respostaNode);
+
 			if (respostaNode[0] == NODE_FUNCIONANDO)
 			{
 				sendNodeFuncionando();
@@ -290,12 +304,18 @@ void menu()
 				sendErro();
 			break;
 		case 2:
-			strReq[0] = MEDIDA_ENTRADA_ANALOGICA;
-			strReq[1] = SENSOR_NUM(0);
-			uart_tx(strReq, uart0_filestream);
+			requisicaoRasp[0] = SOLICITA_ENTRADA_ANALOGICA;
+			requisicaoRasp[1] = SENSOR_NUM(0);
+
+			printf("tx a mandar: %s\n", requisicaoRasp);
+			uart_tx(requisicaoRasp, uart0_filestream);
+
 			usleep(100000); // delay 0.1 segundos
+
 			uart_rx(uart0_filestream, respostaNode);
-			if ((respostaNode[0] != NULL) || (respostaNode[0] != '\0'))
+			printf("rx lido: %s\n", respostaNode);
+
+			if (respostaNode[0] == MEDIDA_ENTRADA_ANALOGICA)
 			{
 				sendEntradaAnalogica(respostaNode);
 			}
@@ -306,13 +326,24 @@ void menu()
 			escolhaDigital(uart0_filestream, respostaNode);
 			break;
 		case 4:
+			requisicaoRasp[0] = ACENDE_LED;
+			requisicaoRasp[1] = SENSOR_NUM(0);
+
+			printf("tx a mandar: %s\n", requisicaoRasp);
+			uart_tx(requisicaoRasp, uart0_filestream);
+
+			usleep(100000); // delay 0.1 segundos
+
+			//uart_rx(uart0_filestream, respostaNode);
+			//printf("rx lido: %s\n", respostaNode);
+
 			break;
 		default:
 			printf("Digite uma opcao valida\n");
 			break;
 		}
-		free(respostaNode);
-		free(strReq);
+		//free(respostaNode);
+		//free(requisicaoRasp);
 	}
 	close(uart0_filestream);
 }
