@@ -246,7 +246,7 @@ void menu()
 	uart_start(uart0_filestream);
 	printf("Uart iniciada...\n");
 
-	if (uart0_filestream = !-1)
+	if (uart0_filestream != -1)
 	{
 		printf("uart0_filestream passou...\n");
 
