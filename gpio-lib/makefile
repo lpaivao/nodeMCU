@@ -18,7 +18,7 @@ raspdois: lcdtest2 clean
 lcdtest2: lcdtest2.o 1602minidrv.o
 	gcc $(COMPOPTS) -o $(COMPOUTPUT) $+
 lcdtest2.o: lcdtest.s
-	as -o $@ $< $(ASPIDOIS)
+	gcc -g -c -o $@ $<
 1602minidrv.o: 1602minidrv.s
 	as -o $@ $< $(ASPIDOIS)
 
