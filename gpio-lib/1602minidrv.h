@@ -5,3 +5,4 @@ void _turnOnCursorOn();
 void _setMemoryMode();
 void _cursorHome();
 void _sendChar(char);
+void _printStr(const char *);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "1602minidrv.h"
+#include "../basicOTA/commands.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -262,17 +263,17 @@ void sendNodeFuncionando(){
 }
 
 void sendNodeProblema(){
-	_sendChar('N');
-	_sendChar('O');
-	_sendChar('D');
-	_sendChar('E');
-	_sendChar(' ');
-	_sendChar('N');
-	_sendChar('O');
-	_sendChar('T');
-	_sendChar(' ');
-	_sendChar('O');
-	_sendChar('K');
+	// _sendChar('N');
+	// _sendChar('O');
+	// _sendChar('D');
+	// _sendChar('E');
+	// _sendChar(' ');
+	// _sendChar('N');
+	// _sendChar('O');
+	// _sendChar('T');
+	// _sendChar(' ');
+	// _sendChar('O');
+	// _sendChar('K');
 }
 
 void sendEntradaAnalogica(char *valorAnalogico){
