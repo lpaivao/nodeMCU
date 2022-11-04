@@ -8,6 +8,14 @@
 
 #include "../basicOTA/commands.h"
 
+#ifdef __TESTING__
+#define ADDR_0 '0'
+#define ADDR_1 '1'
+#else
+#define ADDR_0 0
+#define ADDR_1 1
+#endif
+
 int main(int argc, char const *argv[])
 {
     int serial_port = open(argv[1], O_RDWR);
@@ -51,16 +59,16 @@ int main(int argc, char const *argv[])
     // cfsetospeed(&tty, B9600);
     // cfsetspeed(&tty, B9600);
 
-    char command[3][] = {
-        {READ_DIGITAL, 0},
-        {READ_DIGITAL, 1},
-        {READ_ANALOG, 0}};
+    char command[3][2] = {
+        {READ_DIGITAL, ADDR_0},
+        {READ_DIGITAL, ADDR_1},
+        {READ_ANALOG, ADDR_0}};
 
     while (1)
     {
         for (byte i = 0; i < 3; i++)
         {
-            write(serial_port, command[i], sizeof(command));
+            write(serial_port, command[i], sizeof(command[i]));
             usleep(10);
         }
     }
