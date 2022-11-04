@@ -6,6 +6,8 @@
 #include <termios.h>
 #include <unistd.h>
 
+#include "../basicOTA/commands.h"
+
 int main(int argc, char const *argv[])
 {
     int serial_port = open(argv[1], O_RDWR);
@@ -50,6 +52,17 @@ int main(int argc, char const *argv[])
     // cfsetspeed(&tty, B9600);
 
     write(serial_port, argv[2], strlen(argv[2]));
+
+    char command[] = {
+        READ_DIGITAL,
+        0};
+
+    while (1)
+    {
+        write(serial_port, command, sizeof(command));
+        sleep(1);
+    }
+
     // Save tty settings, also checking for error
     if (tcsetattr(serial_port, TCSANOW, &tty) != 0)
     {
