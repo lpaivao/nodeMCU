@@ -35,7 +35,7 @@ void uart_tx(char *tx_string, int uart0_filestream)
 {
 	if (uart0_filestream != -1)
 	{																					 // Se abriu o arquivo da UART
-		int written_bits_length = write(uart0_filestream, tx_string, strlen(tx_string)); // Filestream,mensagem enviada,tamanho da mensagem
+		int written_bits_length = write(uart0_filestream, tx_string, 2); // Filestream,mensagem enviada,tamanho da mensagem
 		if (written_bits_length == -1)
 		{
 			printf("uart_tx() nao funcionou\n");
@@ -194,7 +194,7 @@ void escolhaDigital(int uart0_filestream, char *respostaNode)
 {
 
 	char *strReqDig;
-	strReqDig = (char *)malloc(2);
+	strReqDig = (char *)malloc(2*sizeof(char));
 
 	int digital;
 	printf("Digite a entrada digital desejada:\n");
@@ -208,10 +208,13 @@ void escolhaDigital(int uart0_filestream, char *respostaNode)
 	case 0:
 		strReqDig[0] = ESTADO_ENTRADA_DIGITAL;
 		strReqDig[1] = SENSOR_NUM(0);
-		uart_tx(strReqDig, uart0_filestream);
+		char string[2];
+		string[0]='a';
+		string[1]='b';
+		uart_tx(string, uart0_filestream);
 		usleep(100000); // delay 0.1 segundos
 		uart_rx(uart0_filestream, respostaNode);
-		if (respostaNode[0] != NULL || respostaNode[0] != '\0')
+		if ((respostaNode[0] != NULL) || (respostaNode[0] != '\0'))
 		{
 			sendEntradaDigital(respostaNode);
 		}
@@ -224,7 +227,7 @@ void escolhaDigital(int uart0_filestream, char *respostaNode)
 		uart_tx(strReqDig, uart0_filestream);
 		usleep(100000); // delay 0.1 segundos
 		uart_rx(uart0_filestream, respostaNode);
-		if (respostaNode[0] != NULL || respostaNode[0] != '\0')
+		if ((respostaNode[0] != NULL) || (respostaNode[0] != '\0'))
 		{
 			sendEntradaDigital(respostaNode);
 		}
@@ -251,10 +254,10 @@ void menu()
 		printf("uart0_filestream passou...\n");
 
 		char *respostaNode;
-		respostaNode = (char *)malloc(2);
+		respostaNode = (char *)malloc(2*sizeof(char));
 
 		char *strReq;
-		strReq = (char *)malloc(2);
+		strReq = (char *)malloc(2*sizeof(char));
 
 		int opcao;
 		printf("Digite a opcao:\n");
@@ -271,6 +274,7 @@ void menu()
 		{
 		case 1:
 			strReq[0] = MEDIDA_ENTRADA_ANALOGICA;
+			strReq[1] = 'G';
 			uart_tx(strReq, uart0_filestream);
 			usleep(100000); // delay 0.1 segundos
 			uart_rx(uart0_filestream, respostaNode);
@@ -291,7 +295,7 @@ void menu()
 			uart_tx(strReq, uart0_filestream);
 			usleep(100000); // delay 0.1 segundos
 			uart_rx(uart0_filestream, respostaNode);
-			if (respostaNode[0] != NULL || respostaNode[0] != '\0')
+			if ((respostaNode[0] != NULL) || (respostaNode[0] != '\0'))
 			{
 				sendEntradaAnalogica(respostaNode);
 			}
