@@ -66,7 +66,7 @@ int main(int argc, char const *argv[])
 
     while (1)
     {
-        for (byte i = 0; i < 3; i++)
+        for (int i = 0; i < 3; i++)
         {
             write(serial_port, command[i], sizeof(command[i]));
             usleep(10);
