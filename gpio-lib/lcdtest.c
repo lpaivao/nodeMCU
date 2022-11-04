@@ -49,7 +49,7 @@ void uart_rx(int uart0_filestream, unsigned char *respostaNode){
     
 	int rx_length; 
     int count = 0;
-
+	printf("tste2");
 	int i;
 
     //----- CHECK FOR ANY RX BYTES -----
