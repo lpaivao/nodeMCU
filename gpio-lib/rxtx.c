@@ -51,16 +51,18 @@ int main(int argc, char const *argv[])
     // cfsetospeed(&tty, B9600);
     // cfsetspeed(&tty, B9600);
 
-    write(serial_port, argv[2], strlen(argv[2]));
-
-    char command[] = {
-        READ_DIGITAL,
-        0};
+    char command[3][] = {
+        {READ_DIGITAL, 0},
+        {READ_DIGITAL, 1},
+        {READ_ANALOG, 0}};
 
     while (1)
     {
-        write(serial_port, command, sizeof(command));
-        sleep(1);
+        for (byte i = 0; i < 3; i++)
+        {
+            write(serial_port, command[i], sizeof(command));
+            usleep(10);
+        }
     }
 
     // Save tty settings, also checking for error
