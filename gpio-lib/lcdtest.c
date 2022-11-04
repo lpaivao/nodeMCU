@@ -211,7 +211,7 @@ void escolhaDigital(int uart0_filestream, char *respostaNode)
 		requisicaoRaspDigital[0] = SOLICITA_ENTRADA_DIGITAL;
 		requisicaoRaspDigital[1] = SENSOR_NUM(0);
 
-		printf("tx a mandar: %s\n", requisicaoRasp);
+		printf("tx a mandar: %s\n", requisicaoRaspDigital);
 		uart_tx(requisicaoRaspDigital, uart0_filestream);
 
 		usleep(100000); // delay 0.1 segundos
@@ -219,7 +219,7 @@ void escolhaDigital(int uart0_filestream, char *respostaNode)
 		uart_rx(uart0_filestream, respostaNode);
 		printf("rx lido: %s\n", respostaNode);
 		
-		if ((respostaNode[0] == MEDIDA_ENTRADA_DIGITAL))
+		if ((respostaNode[0] == ESTADO_ENTRADA_DIGITAL))
 		{
 			sendEntradaDigital(respostaNode);
 		}
@@ -230,7 +230,7 @@ void escolhaDigital(int uart0_filestream, char *respostaNode)
 		requisicaoRaspDigital[0] = SOLICITA_ENTRADA_DIGITAL;
 		requisicaoRaspDigital[1] = SENSOR_NUM(1);
 
-		printf("tx a mandar: %s\n", requisicaoRasp);
+		printf("tx a mandar: %s\n", requisicaoRaspDigital);
 		uart_tx(requisicaoRaspDigital, uart0_filestream);
 
 		usleep(100000); // delay 0.1 segundos
@@ -238,7 +238,7 @@ void escolhaDigital(int uart0_filestream, char *respostaNode)
 		uart_rx(uart0_filestream, respostaNode);
 		printf("rx lido: %s\n", respostaNode);
 		
-		if ((respostaNode[0] == MEDIDA_ENTRADA_DIGITAL))
+		if ((respostaNode[0] == ESTADO_ENTRADA_DIGITAL))
 		{
 			sendEntradaDigital(respostaNode);
 		}
