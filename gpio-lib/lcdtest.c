@@ -135,6 +135,7 @@ void uart_config(int uart0_filestream){
 	options.c_lflag = 0;
 	tcflush(uart0_filestream, TCIFLUSH);
 	tcsetattr(uart0_filestream, TCSANOW, &options);
+	printf("Uart configurada!\n");
 }
 
 void uart_start(int uart0_filestream){
@@ -164,8 +165,13 @@ void uart_start(int uart0_filestream){
 		//ERROR - CAN'T OPEN SERIAL PORT
 		printf("Error - Unable to open UART.  Ensure it is not in use by another application\n");
 	}
-	else
+	else{
+		printf("Uart Aberta!\n");
+		printf("Configurando Uart...\n");
 		uart_config(uart0_filestream);
+		
+	}
+		
 }
 
 
@@ -219,8 +225,10 @@ void menu(){
 
 	int uart0_filestream;
 	uart_start(uart0_filestream);
+	printf("Uart iniciada...\n");
 
 	if(uart0_filestream =! -1){
+	printf("uart0_filestream passou...\n");
 
 	char *respostaNode;
 	respostaNode = (char *) malloc(2);
