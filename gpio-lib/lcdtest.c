@@ -38,7 +38,7 @@ void uart_tx(char* tx_string, int uart0_filestream){
 			printf("uart_tx() nao funcionou\n");
 		}
 		else
-			printf("uart_tx() funcionou e escreveu %i bits\n", written_bits_length);
+			printf("uart_tx() funcionou e escreveu %i bytes\n", written_bits_length);
 	}	
 	else{
 		printf("\nFalha na abertura do arquivo");
