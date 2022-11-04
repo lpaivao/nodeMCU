@@ -33,7 +33,12 @@
 //Funcao que envia os dados na UART
 void uart_tx(char* tx_string, int uart0_filestream){
 	if (uart0_filestream != -1){//Se abriu o arquivo da UART
-		write(uart0_filestream, tx_string, strlen(tx_string)); //Filestream,mensagem enviada,tamanho da mensagem
+		int written_bits_length = write(uart0_filestream, tx_string, strlen(tx_string)); //Filestream,mensagem enviada,tamanho da mensagem
+		if(written_bits_length == -1){
+			printf("uart_tx() nao funcionou\n");
+		}
+		else
+			printf("uart_tx() funcionou e escreveu %i bits\n", written_bits_length);
 	}	
 	else{
 		printf("\nFalha na abertura do arquivo");
