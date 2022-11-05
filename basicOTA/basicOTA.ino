@@ -8,6 +8,8 @@
 
 #include "commands.h"
 
+// #define __OTA__
+
 #ifndef STASSID
 #define STASSID "INTELBRAS"
 #define STAPSK "Pbl-Sistemas-Digitais"
@@ -177,7 +179,7 @@ void setup()
 {
   uart0 = uart_init(UART0, BAUDUART0, UART_8N1, 0, 1, 10, 0);
   uart_write(uart0, "\nBooting\r\n", 6);
-#ifndef __TESTING__
+#ifndef __OTA__
   ota_startup();
 #endif
   setupSensorMaps();
@@ -190,7 +192,7 @@ int addr = 0;
 
 void loop()
 {
-#ifndef __TESTING__
+#ifndef __OTA__
   ArduinoOTA.handle();
 #endif
   while ((int)uart_rx_available(uart0) >= 2)
