@@ -70,7 +70,13 @@ int readDigitalSensor(int pin)
 
 int readAnalogSensor(int pin)
 {
-  return (int)system_adc_read();
+  int val = (int)system_adc_read();
+  if (val >= 255)
+  {
+    val = map(val, 0, 1023, 0, 255);
+  }
+
+  return val;
 }
 
 sensor DS0 = {
@@ -179,7 +185,7 @@ void setup()
 {
   uart0 = uart_init(UART0, BAUDUART0, UART_8N1, 0, 1, 10, 0);
   uart_write(uart0, "\nBooting\r\n", 6);
-#ifndef __OTA__
+#ifdef __OTA__
   ota_startup();
 #endif
   setupSensorMaps();
@@ -192,64 +198,64 @@ int addr = 0;
 
 void loop()
 {
-#ifndef __OTA__
+#ifdef __OTA__
   ArduinoOTA.handle();
 #endif
   while ((int)uart_rx_available(uart0) >= 2)
   {
-    uart_read(uart0, recByte, 2);
-    addr = recByte[1];
-    uart_flush(uart0);
-    switch (recByte[0])
+    if (uart_read(uart0, recByte, 2) == 2)
     {
-    case NODE_STATUS:
-      uart_write_char(uart0, NODE_NORMAL);
+      addr = recByte[1];
 #ifdef __TESTING__
-      uart_write_char(uart0, '\n');
+      addr = addr - '0';
 #endif
-      break;
-    case READ_ANALOG:
-      addr = recByte[1] - '0';
-      if (addr >= analog_sensors.installed)
+      switch (recByte[0])
       {
+      case NODE_STATUS:
+        uart_write_char(uart0, NODE_NORMAL);
+        break;
+      case READ_ANALOG:
+        if (addr >= analog_sensors.installed)
+        {
+          break;
+        }
+        uart_write_char(uart0, ANALOG_READ);
+#ifdef __TESTING__
+        ets_uart_printf("%d", analog_sensors.sensors[addr]->read(A0));
+#else
+        uart_write_char(uart0, analog_sensors.sensors[addr]->read(A0));
+#endif
+        break;
+      case READ_DIGITAL:
+        if (addr >= digital_sensors.installed)
+        {
+          break;
+        }
+        uart_write_char(uart0, DIGITAL_READ);
+#ifdef __TESTING__
+        uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
+#else
+        uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin));
+#endif
+        break;
+      case LED_TOGGLE:
+        if (addr >= 2)
+        {
+          break;
+        }
+        GPIO_OUTPUT_SET(LED_PIN, addr);
+        uart_write_char(uart0, NODE_NORMAL);
+        break;
+      case '\r':
+      case '\n':
+        break;
+      default:
+        ets_uart_printf("[ NONE ] Skipping ...");
         break;
       }
-      uart_write_char(uart0, ANALOG_READ);
-      ets_uart_printf("%d", analog_sensors.sensors[addr]->read(A0));
 #ifdef __TESTING__
       uart_write_char(uart0, '\n');
 #endif
-      break;
-    case READ_DIGITAL:
-      addr = recByte[1] - '0';
-      if (addr >= digital_sensors.installed)
-      {
-        break;
-      }
-      uart_write_char(uart0, DIGITAL_READ);
-      uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
-#ifdef __TESTING__
-      uart_write_char(uart0, '\n');
-#endif
-      break;
-    case LED_TOGGLE:
-      addr = recByte[1] - '0';
-      if (addr >= 2)
-      {
-        break;
-      }
-      GPIO_OUTPUT_SET(LED_PIN, addr);
-      uart_write_char(uart0, NODE_NORMAL);
-#ifdef __TESTING__
-      uart_write_char(uart0, '\n');
-#endif
-      break;
-    case '\r':
-    case '\n':
-      break;
-    default:
-      ets_uart_printf("[ NONE ] Skipping ...\n");
-      break;
     }
   }
 }

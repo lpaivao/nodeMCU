@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <fcntl.h>
 #include <errno.h>
@@ -8,6 +9,8 @@
 
 #include "1602minidrv.h"
 #include "../basicOTA/commands.h"
+
+#define PC_MODE
 
 #ifdef __TESTING__
 #define ADDR_0 '0'
@@ -22,12 +25,15 @@
 
 int main(int argc, char const *argv[])
 {
+
+    printf("RxTx Test program\n");
+#ifndef PC_MODE
     // Inicialização do driver de LCD
     _lcdStartup();
     _clearDisplay();
     _turnOnCursorOff();
     _setMemoryMode();
-
+#endif
     // Configurações de porta serial (usando o driver padrão so SO)
     int serial_port = open(argv[1], O_RDWR);
     if (serial_port < 0)
@@ -57,7 +63,7 @@ int main(int argc, char const *argv[])
     tty.c_cflag |= CREAD | CLOCAL;          // Turn on READ & ignore ctrl lines (CLOCAL = 1)
     tty.c_iflag &= ~(IXON | IXOFF | IXANY); // Turn off s/w flow ctrl
 
-    // cfsetspeed(&tty, B9600);
+    cfsetspeed(&tty, B115200);
 
     char command[3][2] = {
         {READ_DIGITAL, ADDR_0},
@@ -66,6 +72,12 @@ int main(int argc, char const *argv[])
 
     int rx_length = 0;
     char *respostaNode = (char *)malloc(2 * sizeof(char));
+
+    // Save tty settings, also checking for error
+    if (tcsetattr(serial_port, TCSANOW, &tty) != 0)
+    {
+        printf("[ERROR] %i from tcsetattr: %s\n", errno, strerror(errno));
+    }
     while (1)
     {
         for (int i = 0; i < 3; i++)
@@ -73,21 +85,12 @@ int main(int argc, char const *argv[])
             write(serial_port, command[i], sizeof(command[i]));
             usleep(SLEEP_TIME_U);
         }
-        rx_length = read(serial_port, respostaNode, 2);
 
-        if (rx_length == 2)
+        while (read(serial_port, (void *)respostaNode, 2) == 2)
         {
-            _printStr("RX OK");
+            printf("rx: %d.%d\n", respostaNode[0], respostaNode[1]);
         }
-
         sleep(SLEEP_TIME_S);
-        _clearDisplay();
-    }
-
-    // Save tty settings, also checking for error
-    if (tcsetattr(serial_port, TCSANOW, &tty) != 0)
-    {
-        printf("[ERROR] %i from tcsetattr: %s\n", errno, strerror(errno));
     }
 
     return 0;

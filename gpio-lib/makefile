@@ -17,7 +17,7 @@ BASEAS=as -o $@ $<
 raspdois: lcdtest2 clean
 lcdtest2: lcdtest2.o 1602minidrv.o
 	gcc $(COMPOPTS) -o $(COMPOUTPUT) $+
-lcdtest2.o: lcdtest.c
+lcdtest2.o: rxtx.c
 	gcc -g -c -o $@ $<
 1602minidrv.o: 1602minidrv.s
 	as -o $@ $< $(ASPIDOIS)
@@ -27,11 +27,14 @@ lcdtest2.o: lcdtest.c
 raspzero: lcdtestZ clean
 lcdtestZ: lcdtestZ.o 1602minidrvZ.o
 	gcc $(COMPOPTS) -o $(COMPOUTPUT) $+
-lcdtestZ.o: lcdtest.s 
-	as -o $@ $< $(ASPIZERO)
+lcdtestZ.o: rxtx.c 
+	gcc -g -c -o $@ $<
 1602minidrvZ.o: 1602minidrv.s
 	as -o $@ $< $(ASPIZERO)
 
+pc: rxtx clean
+rxtx: rxtx.c
+	$(BASEGCC)
 
 # Teste em C
 cteste: cteste.o 1602minidrv.o

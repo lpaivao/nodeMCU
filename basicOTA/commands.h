@@ -7,7 +7,7 @@
  *
  */
 
-#define __TESTING__
+// #define __TESTING__
 
 /**
  * @brief Request commands: Comandos de solicitação enviados pelo SBC
