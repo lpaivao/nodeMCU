@@ -70,13 +70,7 @@ int readDigitalSensor(int pin)
 
 int readAnalogSensor(int pin)
 {
-  int val = (int)system_adc_read();
-  if (val >= 255)
-  {
-    val = map(val, 0, 1023, 0, 255);
-  }
-
-  return val;
+  return map(system_adc_read(), 0, 1023, 0, 254);
 }
 
 sensor DS0 = {
@@ -250,7 +244,12 @@ void loop()
       case '\n':
         break;
       default:
+      #ifdef __TESTING__
         ets_uart_printf("[ NONE ] Skipping ...");
+      #else
+        uart_write_char(uart0, NODE_SKIP);
+        uart_write_char(uart0, NODE_SKIP);
+      #endif
         break;
       }
 #ifdef __TESTING__

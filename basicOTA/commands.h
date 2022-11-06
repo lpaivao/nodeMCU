@@ -36,6 +36,7 @@
 #define DIGITAL_READ 'D'
 #else
 #define NODE_TROUBLE 0x1f
+#define NODE_SKIP 0xff
 #define NODE_NORMAL 0x00
 #define ANALOG_READ 0x1
 #define DIGITAL_READ 0x2

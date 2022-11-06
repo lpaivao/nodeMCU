@@ -73,13 +73,19 @@ int main(int argc, char const *argv[])
     int rx_length = 0;
     char *respostaNode = (char *)malloc(2 * sizeof(char));
 
+    char resType = 'O';
+
     // Save tty settings, also checking for error
     if (tcsetattr(serial_port, TCSANOW, &tty) != 0)
     {
         printf("[ERROR] %i from tcsetattr: %s\n", errno, strerror(errno));
     }
+
     while (1)
     {
+#ifndef PC_MODE
+        _clearDisplay();
+#endif
         for (int i = 0; i < 3; i++)
         {
             write(serial_port, command[i], sizeof(command[i]));
@@ -88,7 +94,24 @@ int main(int argc, char const *argv[])
 
         while (read(serial_port, (void *)respostaNode, 2) == 2)
         {
-            printf("rx: %d.%d\n", respostaNode[0], respostaNode[1]);
+            switch (respostaNode[0])
+            {
+            case ANALOG_READ:
+                resType = 'A';
+                break;
+            case DIGITAL_READ:
+                resType = 'D';
+                break;
+            default:
+                break;
+            }
+#ifdef PC_MODE
+            printf("%c %d\n", resType, respostaNode[1]);
+#else
+            _sendChar(resType);
+            _sendChar(respostaNode[1]);
+            _sendChar(' ');
+#endif
         }
         sleep(SLEEP_TIME_S);
     }
