@@ -20,6 +20,7 @@
 #define ADDR_1 1
 #endif
 
+// #define SLEEP_TIME_S 500000
 #define SLEEP_TIME_S 1
 #define SLEEP_TIME_U 10
 
@@ -28,11 +29,18 @@ int main(int argc, char const *argv[])
 
     printf("RxTx Test program\n");
 #ifndef PC_MODE
+    printf("LCD Startup\n");
     // Inicialização do driver de LCD
     _lcdStartup();
     _clearDisplay();
     _turnOnCursorOff();
     _setMemoryMode();
+
+    _clearDisplay();
+    _sendChar('o');
+    _sendChar('k');
+
+    sleep(5);
 #endif
     // Configurações de porta serial (usando o driver padrão so SO)
     int serial_port = open(argv[1], O_RDWR);
@@ -80,18 +88,21 @@ int main(int argc, char const *argv[])
     {
         printf("[ERROR] %i from tcsetattr: %s\n", errno, strerror(errno));
     }
-
     while (1)
     {
 #ifndef PC_MODE
-        _clearDisplay();
+        // _clearDisplay();
+        _cursorHome();
+        _sendChar('T');
 #endif
+        printf("> ");
         for (int i = 0; i < 3; i++)
         {
             write(serial_port, command[i], sizeof(command[i]));
             usleep(SLEEP_TIME_U);
         }
 
+        printf("<\n");
         while (read(serial_port, (void *)respostaNode, 2) == 2)
         {
             switch (respostaNode[0])
@@ -102,17 +113,22 @@ int main(int argc, char const *argv[])
             case DIGITAL_READ:
                 resType = 'D';
                 break;
+            case NODE_SKIP:
+                resType = 'K';
             default:
                 break;
             }
-#ifdef PC_MODE
-            printf("%c %d\n", resType, respostaNode[1]);
-#else
+            printf("%c %d", resType, respostaNode[1]);
+            printf("\n");
+
+#ifndef PC_MODE
             _sendChar(resType);
-            _sendChar(respostaNode[1]);
+            _sendChar(respostaNode[1] + '0');
             _sendChar(' ');
+            _sendChar('O');
 #endif
         }
+        // tcflush(serial_port, TCIOFLUSH);
         sleep(SLEEP_TIME_S);
     }
 

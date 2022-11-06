@@ -59,3 +59,8 @@ inputtest.o: inputtest.s
 
 clean:
 	rm -vf *.o
+
+SERIAL_PORT=/dev/ttyAMA0
+
+run: lcdtest
+	sudo ./$< $(SERIAL_PORT)

@@ -214,11 +214,7 @@ void loop()
           break;
         }
         uart_write_char(uart0, ANALOG_READ);
-#ifdef __TESTING__
-        ets_uart_printf("%d", analog_sensors.sensors[addr]->read(A0));
-#else
         uart_write_char(uart0, analog_sensors.sensors[addr]->read(A0));
-#endif
         break;
       case READ_DIGITAL:
         if (addr >= digital_sensors.installed)
@@ -244,12 +240,12 @@ void loop()
       case '\n':
         break;
       default:
-      #ifdef __TESTING__
+#ifdef __TESTING__
         ets_uart_printf("[ NONE ] Skipping ...");
-      #else
+#else
         uart_write_char(uart0, NODE_SKIP);
         uart_write_char(uart0, NODE_SKIP);
-      #endif
+#endif
         break;
       }
 #ifdef __TESTING__
