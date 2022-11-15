@@ -77,7 +77,7 @@ Esta plataforma é composta basicamente por um chip controlador (ESP8266 ESP-12E
 	</div>
 
 ### OTA (Over the air)
-Outro diferencial do NodeMCU é a possibilidade de fazer a programação da placa via OTA (Over The Air), ou seja, através do WiFi você pode enviar os códigos para a placa. Inclusive, o código do problema possui configurações para seu uso.
+Outro diferencial do NodeMCU é a possibilidade de fazer a programação da placa via OTA (Over The Air), ou seja, através do WiFi você pode enviar os códigos para a placa. Inclusive, o código do problema possui configurações para seu uso no LARSID - UEFS, com IP fixo para a rede INTELBRAS.
 
 ## SBC - Raspberry Pi Zero W
 
@@ -121,7 +121,7 @@ Uma das grandes vantagens do UART é que ele é assíncrono – o transmissor e 
 
 | Parâmetro  	| Valor |
 | ------------- | ------------- |
-| Baud Rate  | 9600 |
+| Baud Rate  | 115200 |
 | Tamanho do dado  | 8 Bits |
 | Bits de paridade  | Não possui |
 | Bits de parada  | 1 bit |
@@ -132,7 +132,7 @@ Dessa forma, o pino TX da Raspberry envia dados para o pino RX do NodeMCU, que r
 
 No problema, a comunicação funciona da seguinte forma: a Raspbery envia comandos de requisição para a NodeMCU através de códigos hexadecimais já estabelecidos, e o NodeMCU envia de volta comandos de resposta por um código também hexadecimal. Esses comandos de requisição são descritos nas tabelas abaixo:
 
-### Comandos de Requisição (Raspberry -> NodeMCU)
+- Comandos de Requisição (Raspberry -> NodeMCU)
 
 | Código  	| Descrição do comando |
 | ------------- | ------------- |
@@ -141,7 +141,7 @@ No problema, a comunicação funciona da seguinte forma: a Raspbery envia comand
 | 0x05  | Solicita o valor de uma das entradas digitais |
 | 0x06  | Acendimento do led da NodeMCU |
 
-### Comandos de Resposta (NodeMCU -> Raspberry)
+- Comandos de Resposta (NodeMCU -> Raspberry)
 
 | Código  	| Descrição do comando |
 | ------------- | ------------- |
@@ -157,3 +157,65 @@ A IDE foi configurada de forma a instalar e configurar todas as dependências, b
 
 ### *Visual Studio Code* (VSCode)
 Esse editor de texto foi utilizado somente para a escrita do código em C, que posteriormente seria introduzido no código do *Arduino IDE* para a compilação no sketch.
+
+
+## Produto Desenvolvido (SBC)
+
+O código da raspberry foi totalmente desenvolvido em linguagem C. Foi utilizada a biblioteca Termios (termios.h) para a utilização da comunicação UART, que contém as definições usadas pela interface do terminal de entrada/saída.
+
+- Funções e suas funcionalidades
+
+| Função 	| O que faz |
+| ------------- | ------------- |
+| open()  |  Abre o arquivo da porta UART|
+| write()  | Envia os bytes para o buffer TX |
+| read()   | Lê os bytes do buffer RX |
+| usleep()  |  Delay em nanosegundos|
+| menu()  | Menu que fica em loop com as opções para o usuário|
+
+### Makefile
+
+- Raspberry Pi Zero W
+
+```console
+
+make raspzero
+sudo ./lcdtest
+
+```
+
+- Raspberry Pi 2
+
+```console
+
+make raspdois
+sudo ./lcdtest
+
+```
+
+
+## Produto Desenvolvido (NodeMCU)
+
+O código do node MCU foi totalmente desenvolvido em linguagem C, sem utilizar as funcionalidades do *ArduinoIDE* (com exceção da parte referente ao OTA). Portanto, utilizou-se da biblioteca do kit *esp8266* da IDE para o desenvolvimento.
+
+- Caminho no Linux para as bibliotecas
+
+```console
+/home/(username)/.arduino15/packages/esp8266/hardware/esp8266/3.0.2/
+```
+
+- Funções e suas funcionalidades
+
+| Função 	| O que faz |
+| ------------- | ------------- |
+| setupSensorMaps()  |  Configura o mapa de sensores |
+| readDigitalSensor()  |  Retorna o pino do sensor digital selecionado |
+| readAnalogSensor()  | Retorna o pino do sensor analógico |
+| uart_write_char() | Envia um byte para o buffer TX |
+| uart_read()   | Lê os bytes do buffer RX |
+
+## Testes e Simulações
+
+### SBC
+
+### NodeMCU
