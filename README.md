@@ -161,7 +161,7 @@ Esse editor de texto foi utilizado somente para a escrita do código em C, que p
 
 ## Produto Desenvolvido (SBC)
 
-O código da raspberry foi totalmente desenvolvido em linguagem C. Foi utilizada a biblioteca Termios (termios.h) para a utilização da comunicação UART, que contém as definições usadas pela interface do terminal de entrada/saída.
+O código da raspberry foi totalmente desenvolvido em linguagem C. Foi utilizada a biblioteca [Termios](https://pubs.opengroup.org/onlinepubs/7908799/xsh/termios.h.html) (termios.h) para a utilização da comunicação UART, que contém as definições usadas pela interface do terminal de entrada/saída.
 
 - Funções e suas funcionalidades
 
@@ -172,6 +172,9 @@ O código da raspberry foi totalmente desenvolvido em linguagem C. Foi utilizada
 | read()   | Lê os bytes do buffer RX |
 | usleep()  |  Delay em nanosegundos|
 | menu()  | Menu que fica em loop com as opções para o usuário|
+| _sendChar()  | Envia um caractere ao display |
+| _clearDisplay()  | Limpa o display |
+
 
 ### Makefile
 
