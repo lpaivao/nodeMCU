@@ -7,8 +7,13 @@
 #include <termios.h>
 #include <unistd.h>
 
-#include "1602minidrv.h"
 #include "../basicOTA/commands.h"
+
+//Display begin
+extern void map();
+extern void lcdInit();
+extern void clear();
+extern void lcdWrite(int a);
 
 #define PC_MODE
 

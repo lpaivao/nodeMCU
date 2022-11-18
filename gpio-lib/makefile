@@ -12,15 +12,26 @@ ASPIDOIS = -mcpu=cortex-a7 --defsym .pimodel=2
 BASEGCC=gcc -o $@ $+
 BASEAS=as -o $@ $<
 
+LIBOBJS = lcdInit.o map.o lcdWrite.o clear.o
+
+
 # LCD
 # Para RaspberryPi 2
-raspdois: lcdtest2 clean
+# raspdois: lcdtest2 clean
 lcdtest2: lcdtest2.o 1602minidrv.o
 	gcc $(COMPOPTS) -o $(COMPOUTPUT) $+
 lcdtest2.o: rxtx.c
 	gcc -g -c -o $@ $<
 1602minidrv.o: 1602minidrv.s
 	as -o $@ $< $(ASPIDOIS)
+
+%.o : %.s
+	$(BASEAS)
+libdisplay.a: $(LIBOBJS)
+	ar -cvq $@ $<
+rxtx: rxrx.c libdisplay.a
+	$(BASEGCC)
+raspdois: rxtx clean
 
 
 # Para RaspberryPi Zero
@@ -31,31 +42,6 @@ lcdtestZ.o: rxtx.c
 	gcc -g -c -o $@ $<
 1602minidrvZ.o: 1602minidrv.s
 	as -o $@ $< $(ASPIZERO)
-
-pc: rxtx clean
-rxtx: rxtx.c
-	$(BASEGCC)
-
-# Teste em C
-cteste: cteste.o 1602minidrv.o
-	gcc -o cteste cteste.o 1602minidrv.o
-cteste.o: lcdtest.c 1602minidrv.h
-	gcc -g -c -Wall -o $@ lcdtest.c
-
-
-mteste: teste clean
-teste: teste.c teste.o
-	$(BASEGCC)
-teste.o: teste.s
-	$(BASEAS)
-
-# Input
-
-intest: inputtest clean
-inputtest: inputtest.o
-	gcc -o $@ $+
-inputtest.o: inputtest.s
-	as -o $@ $<
 
 clean:
 	rm -vf *.o
