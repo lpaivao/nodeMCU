@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include <unistd.h>			//Used for UART
-#include <fcntl.h>			//Used for UART
+#include <unistd.h>		//Used for UART
+#include <fcntl.h>		//Used for UART
 #include <termios.h>		//Used for UART
 #include <time.h>
 #include <string.h>
@@ -141,12 +141,12 @@ void sendNodeProblema()
 void sendEntradaAnalogica(char *valorAnalogico)
 {
 	print_lcd("Analogico: ");
-	print_lcd(valorAnalogico);
+	write_char(*valorAnalogico + '0');
 }
 void sendEntradaDigital(char *estado)
 {
 	print_lcd("Digital: ");
-	print_lcd(estado);
+	write_char(*estado + '0');
 }
 void sendErro()
 {
@@ -209,6 +209,7 @@ void menu()
 	if (uart0_filestream != -1)
 	{	
 		int opcao;
+		bool estado_led = false;
 
 		do{
 
@@ -216,12 +217,11 @@ void menu()
 			char requisicaoRasp[2];
 			
 			printf("Digite a opcao:\n");
-			printf("1 - SituACENDE_LEDação atual do node\n");
+			printf("1 - Situação atual do node\n");
 			printf("2 - Valor da entrada analogica\n");
 			printf("3 - Valor de uma das entradas digitais\n");
-			printf("4 - Acender led\n");
-			printf("5 - Desligar led\n");
-			printf("6 - Sair\n");
+			printf("4 - Muda estado do led\n");
+			printf("5 - Sair\n");
 			scanf("%i", &opcao);
 		
         	clear_lcd(); //clear display
@@ -257,7 +257,6 @@ void menu()
 
 			if (respostaNode[0] == MEDIDA_ENTRADA_ANALOGICA)
 			{	
-				print_lcd("Analog: ");
 				sendEntradaAnalogica(respostaNode[1]);
 			}
 			else
@@ -270,24 +269,19 @@ void menu()
 		case 4:
 			serialFlush();
 			requisicaoRasp[0] = ACENDE_LED;
-			requisicaoRasp[1] = SENSOR_NUM(0);
+			requisicaoRasp[1] = estado_led;			
 			uart_tx(requisicaoRasp);
-			print_lcd("Led Ligado");
+			estado_led?print_lcd("Led Ligado"):print_lcd("Led Desligado");
+			estado_led = !estado_led;
 			break;
 		case 5:
-			serialFlush();
-			requisicaoRasp[0] = DESLIGA_LED;
-			requisicaoRasp[1] = SENSOR_NUM(0);
-			uart_tx(requisicaoRasp);
-			print_lcd("Led Desligado");
-			break;
-		case 6:
 			break;
 		default:
 			printf("Digite uma opcao valida\n");
 			break;
 		}
-		} while(opcao != 6);
+		fflush(stdin);
+		} while(opcao != 5);
 	}
 
 }
