@@ -8,7 +8,7 @@
 
 #include "commands.h"
 
-// #define __OTA__
+#define __OTA__
 
 #ifndef STASSID
 #define STASSID "INTELBRAS"
