@@ -56,17 +56,10 @@ int uart0_filestream = -1;
 
 void uart_rx(char *respostaNode)
 {
-	int count = 0;
-	//----- CHECK FOR ANY RX BYTES -----
 	if (uart0_filestream != -1)
 	{
-		// Passa o bit do RX para a variável c, e depois de c para a string de resposta
-		//  for(count = 0; count < sizeof(respostaNode); count++){
 		int rx_length = read(uart0_filestream, respostaNode, 2); // Filestream, buffer to store in, number of bytes to read (max)
-		// respostaNode[i] = c;
-		// if(c == '\n')
-		// break;
-		// }
+
 		if (rx_length < 0)
 		{
 			printf("An error occured\n");
@@ -87,8 +80,8 @@ void uart_rx(char *respostaNode)
 void uart_tx(char *tx_string)
 {
 	if (uart0_filestream != -1)
-	{																					 // Se abriu o arquivo da UART
-		int written_bits_length = write(uart0_filestream, tx_string, 2); // Filestream,mensagem enviada,tamanho da mensagem
+	{
+		int written_bits_length = write(uart0_filestream, tx_string, 2);
 		if (written_bits_length == -1)
 		{
 			printf("uart_tx() nao funcionou\n");
@@ -102,32 +95,17 @@ void uart_tx(char *tx_string)
 	}
 }
 
-// Limpar a entrada da comunicação serial 
+// Limpa entrada da comunicação serial 
 void serialFlush ()
 {
   tcflush (uart0_filestream, TCIOFLUSH) ;
 }
 
-void sendNodeFuncionando()
-{
-	print_lcd("NODE OK");
-}
-void sendNodeProblema()
-{
-	print_lcd("NODE NOT OK");
-}
-void sendEntradaAnalogica(char *valorAnalogico)
-{
-	print_lcd(valorAnalogico);
-}
-void sendEntradaDigital(char *estado)
-{
-	print_lcd("Digital: ");
-	print_lcd(estado);
-}
-void sendErro()
-{
-	print_lcd("ERRO");
+//Display code begin
+void delay(int number_of_seconds){
+    int mili = 1000*number_of_seconds;
+    clock_t start_time = clock();
+    while(clock() < start_time + mili);
 }
 
 // Configuração da comunicação UART
@@ -142,7 +120,7 @@ bool uart_config(){
 
     struct termios options;
     tcgetattr(uart0_filestream, &options);
-    options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
+    options.c_cflag = B115200 | CS8 | CLOCAL | CREAD;
     options.c_iflag = IGNPAR;
     options.c_oflag = 0;
     options.c_lflag = 0;
@@ -150,6 +128,29 @@ bool uart_config(){
     tcsetattr(uart0_filestream, TCSANOW, &options);
 
 	return true;
+}
+
+void sendNodeFuncionando()
+{
+	print_lcd("NODE OK");
+}
+void sendNodeProblema()
+{
+	print_lcd("NODE NOT OK");
+}
+void sendEntradaAnalogica(char *valorAnalogico)
+{
+	print_lcd("Analogico: ");
+	print_lcd(valorAnalogico);
+}
+void sendEntradaDigital(char *estado)
+{
+	print_lcd("Digital: ");
+	print_lcd(estado);
+}
+void sendErro()
+{
+	print_lcd("ERRO");
 }
 
 void escolhaDigital(char *respostaNode)
@@ -166,15 +167,11 @@ void escolhaDigital(char *respostaNode)
 		serialFlush();
 		requisicaoRaspDigital[0] = SOLICITA_ENTRADA_DIGITAL;
 		requisicaoRaspDigital[1] = SENSOR_NUM(0);
-
-		printf("tx a mandar: %s\n", requisicaoRaspDigital);
-		printf("tx a mandar: %s\n", requisicaoRaspDigital);
 		uart_tx(requisicaoRaspDigital);
 
 		usleep(100000); // delay 0.1 segundos
 
 		uart_rx(respostaNode);
-		printf("rx lido: %s\n", respostaNode);
 
 		if ((respostaNode[0] == ESTADO_ENTRADA_DIGITAL))
 		{
@@ -188,14 +185,11 @@ void escolhaDigital(char *respostaNode)
 		requisicaoRaspDigital[0] = SOLICITA_ENTRADA_DIGITAL;
 		requisicaoRaspDigital[1] = SENSOR_NUM(1);
 
-		printf("tx a mandar: %s\n", requisicaoRaspDigital);
-		printf("tx a mandar: %s\n", requisicaoRaspDigital);
 		uart_tx(requisicaoRaspDigital);
 
 		usleep(100000); // delay 0.1 segundos
 
 		uart_rx(respostaNode);
-		printf("rx lido: %s\n", respostaNode);
 
 		if ((respostaNode[0] == ESTADO_ENTRADA_DIGITAL))
 		{
@@ -238,11 +232,9 @@ void menu()
 			serialFlush();
 			requisicaoRasp[0] = SITUACAO_ATUAL_NODE;
 			requisicaoRasp[1] = 'G';
-			printf("tx a mandar: %s\n", requisicaoRasp);
 			uart_tx(requisicaoRasp);
 			usleep(100000); // delay 0.1 segundos
 			uart_rx(respostaNode);
-			printf("rx lido: %s\n", respostaNode);
 			if (respostaNode[0] == NODE_FUNCIONANDO)
 			{
 				sendNodeFuncionando();
