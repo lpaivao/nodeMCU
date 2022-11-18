@@ -168,12 +168,14 @@ O código da raspberry foi totalmente desenvolvido em linguagem C. Foi utilizada
 | Função 	| O que faz |
 | ------------- | ------------- |
 | open()  |  Abre o arquivo da porta UART|
-| write()  | Envia os bytes para o buffer TX |
-| read()   | Lê os bytes do buffer RX |
+| write()  | Envia os bytes para o buffer TX (*Termios*)|
+| read()   | Lê os bytes do buffer RX (*Termios*)|
+| uart_tx()  | Envia os bytes para o buffer TX; utiliza write() |
+| uart_rx()   | Lê os bytes do buffer RX; utiliza read() |
 | usleep()  |  Delay em nanosegundos|
 | menu()  | Menu que fica em loop com as opções para o usuário|
-| _sendChar()  | Envia um caractere ao display |
-| _clearDisplay()  | Limpa o display |
+| printLcd()  | Envia uma string ao display |
+| clear()  | Limpa o display |
 
 
 ### Makefile
@@ -182,17 +184,8 @@ O código da raspberry foi totalmente desenvolvido em linguagem C. Foi utilizada
 
 ```console
 
-make raspzero
-sudo ./lcdtest
-
-```
-
-- Raspberry Pi 2
-
-```console
-
-make raspdois
-sudo ./lcdtest
+make
+sudo ./main
 
 ```
 
