@@ -73,3 +73,4 @@ db6: .word 8                    @Offset do GPFSel do pino DB6
 db7: .word 8                    @Offset do GPFSel do pino DB7
      .word 3                    @Posição dos bits de FSel do pino DB7
      .word 21                   @Posição do bit para clear e set register do pino DB7
+     

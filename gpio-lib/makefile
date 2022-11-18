@@ -26,10 +26,10 @@ lcdtest2.o: rxtx.c
 	as -o $@ $< $(ASPIDOIS)
 
 %.o : %.s
-	$(BASEAS)
+	$(BASEAS) $(ASPIDOIS)
 libdisplay.a: $(LIBOBJS)
-	ar -cvq $@ $<
-rxtx: rxrx.c libdisplay.a
+	ar -cvq $@ $+
+rxtx: rxtx.c libdisplay.a
 	$(BASEGCC)
 raspdois: rxtx clean
 
@@ -48,5 +48,5 @@ clean:
 
 SERIAL_PORT=/dev/ttyAMA0
 
-run: lcdtest
-	sudo ./$< $(SERIAL_PORT)
+run:
+	sudo ./rxtx $(SERIAL_PORT)

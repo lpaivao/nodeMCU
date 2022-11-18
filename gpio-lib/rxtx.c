@@ -9,13 +9,13 @@
 
 #include "../basicOTA/commands.h"
 
-//Display begin
+// Display begin
 extern void map();
 extern void lcdInit();
 extern void clear();
 extern void lcdWrite(int a);
 
-#define PC_MODE
+// #define PC_MODE
 
 #ifdef __TESTING__
 #define ADDR_0 '0'
@@ -34,18 +34,9 @@ int main(int argc, char const *argv[])
 
     printf("RxTx Test program\n");
 #ifndef PC_MODE
-    printf("LCD Startup\n");
-    // Inicialização do driver de LCD
-    _lcdStartup();
-    _clearDisplay();
-    _turnOnCursorOff();
-    _setMemoryMode();
-
-    _clearDisplay();
-    _sendChar('o');
-    _sendChar('k');
-
-    sleep(5);
+    // map();
+    lcdInit();
+    clear();
 #endif
     // Configurações de porta serial (usando o driver padrão so SO)
     int serial_port = open(argv[1], O_RDWR);
@@ -93,14 +84,13 @@ int main(int argc, char const *argv[])
     {
         printf("[ERROR] %i from tcsetattr: %s\n", errno, strerror(errno));
     }
+    tcflush(serial_port, TCIOFLUSH);
     while (1)
     {
-#ifndef PC_MODE
-        // _clearDisplay();
-        _cursorHome();
-        _sendChar('T');
-#endif
         printf("> ");
+#ifndef PC_MODE
+        lcdWrite('S');
+#endif
         for (int i = 0; i < 3; i++)
         {
             write(serial_port, command[i], sizeof(command[i]));
@@ -125,15 +115,8 @@ int main(int argc, char const *argv[])
             }
             printf("%c %d", resType, respostaNode[1]);
             printf("\n");
-
-#ifndef PC_MODE
-            _sendChar(resType);
-            _sendChar(respostaNode[1] + '0');
-            _sendChar(' ');
-            _sendChar('O');
-#endif
         }
-        // tcflush(serial_port, TCIOFLUSH);
+        tcflush(serial_port, TCIOFLUSH);
         sleep(SLEEP_TIME_S);
     }
 

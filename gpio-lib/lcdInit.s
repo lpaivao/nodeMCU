@@ -94,7 +94,13 @@ lcdInit:
 
 .data
 fileName: .asciz "/dev/mem"     @Diretório usado para o mapeamento de memória
+.if .pimodel == 2
+gpioaddr: .word 0x3f200         @Endereço dos GPIO / 4096
+.endif
+.if .pimodel == 0
 gpioaddr: .word 0x20200         @Endereço dos GPIO / 4096
+.endif
+
 timespecnano5: .word 0          @Delay de 5 milisegundos
                 .word 5000000
 timespecnano150: .word 0        @Delay de 1.5 milisegundos
