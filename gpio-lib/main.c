@@ -216,7 +216,7 @@ void menu()
 			char requisicaoRasp[2];
 			
 			printf("Digite a opcao:\n");
-			printf("1 - Situação atual do node\n");
+			printf("1 - SituACENDE_LEDação atual do node\n");
 			printf("2 - Valor da entrada analogica\n");
 			printf("3 - Valor de uma das entradas digitais\n");
 			printf("4 - Acender led\n");
@@ -276,7 +276,7 @@ void menu()
 			break;
 		case 5:
 			serialFlush();
-			requisicaoRasp[0] = ACENDE_LED;
+			requisicaoRasp[0] = DESLIGA_LED;
 			requisicaoRasp[1] = SENSOR_NUM(0);
 			uart_tx(requisicaoRasp);
 			print_lcd("Led Desligado");
