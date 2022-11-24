@@ -34,7 +34,7 @@ O sistema será comandado por um Single Board Computer (SBC), e deve ser capaz d
 	</div>
 	
 ## NodeMCU
-O NodeMCU é uma plataforma open source da família ESP8266 criado para ser utilizado no desenvolvimento de projetos IoT. Esta placa foi iniciada em 2014 e é bem interessante, pois ao contrário de alguns módulos desta família que necessitam de um conversor USB serial externo para que haja troca de informações entre computador e o módulo, o NodeMCU já vem com um conversor USB serial integrado.
+O NodeMCU é uma plataforma open source da família ESP8266 criado para ser utilizado no desenvolvimento de projetos IoT. O *NodeMCU* já vem com um conversor USB serial integrado.
 
 Esta plataforma é composta basicamente por um chip controlador (ESP8266 ESP-12E), uma porta micro USB para alimentação e programação, conversor USB serial integrado e já possui WiFi nativo.
 
@@ -48,7 +48,7 @@ Esta plataforma é composta basicamente por um chip controlador (ESP8266 ESP-12E
 - [ESP8266 Technical Reference](https://www.espressif.com/sites/default/files/documentation/esp8266-technical_reference_en.pdf)
 - [ESP8266 Datasheet](https://www.espressif.com/sites/default/files/documentation/0a-esp8266ex_datasheet_en.pdf) 
 
-#### Especificações
+### Especificações
 - Processador ESP8266-12E
 - Arquitetura RISC de 32 bits
 - Processador pode operar em 80MHz / 160MHz
@@ -76,12 +76,19 @@ Esta plataforma é composta basicamente por um chip controlador (ESP8266 ESP-12E
 		</p>
 	</div>
 
+### Pinos Utilizados
+
+- GPIO 16 (D0) - Input -> Botão 0
+- GPIO 05 (D1) - Input -> Botão 1
+- A0 (Analógico) - Output -> Potenciômetro
+- TXD0
+- RXD0
 ### OTA (Over the air)
-Outro diferencial do NodeMCU é a possibilidade de fazer a programação da placa via OTA (Over The Air), ou seja, através do WiFi você pode enviar os códigos para a placa. Inclusive, o código do problema possui configurações para seu uso no LARSID - UEFS, com IP fixo para a rede INTELBRAS.
+Através do NodeMCU há a possibilidade de fazer a programação da placa via OTA (Over The Air), ou seja, através do WiFi pode se enviar os códigos para a placa. Inclusive, o código do problema possui configurações para seu uso no LARSID - UEFS, com IP fixo para a rede INTELBRAS.
 
 ## SBC - Raspberry Pi Zero W
 
-O SBC utilizado foi a Raspberry Pi Zero W.
+O SBC utilizado para este problema foi a Raspberry Pi Zero W.
 
 <div id="image11" style="display: inline_block" align="center">
 		<img src="/imagens/raspberry.jpg"/><br>
@@ -91,7 +98,7 @@ O SBC utilizado foi a Raspberry Pi Zero W.
 	</div>
 
 
-#### Especificações
+### Especificações
 - [Documentação Raspberry](https://www.raspberrypi.com/documentation/)
 - [Documentação CPU Broadcom BCM2835 SOC](https://www.raspberrypi.org/app/uploads/2012/02/BCM2835-ARM-Peripherals.pdf)
 - ARM1176JZF-S core type
@@ -100,7 +107,7 @@ O SBC utilizado foi a Raspberry Pi Zero W.
 - RAM 512 MB
 - GPIO 40-Pins
 
-#### Pinos Utilizados
+### Pinos Utilizados
 
 - GPIO 12 - Output -> D4 (LCD)
 - GPIO 16 - Output -> D5 (LCD)
@@ -114,7 +121,7 @@ O SBC utilizado foi a Raspberry Pi Zero W.
 ## Protocolo de comunicação - UART
 O SBC precisa se comunicar com o NodeMCU através de um protocoloco de comunicação chamado UART (Universal Asynchronous Receiver / Transmitter).  O UART é muito simples e utiliza somente dois fios entre o transmissor e o receptor para transmitir e receber em ambas as direções.
 
-Uma das grandes vantagens do UART é que ele é assíncrono – o transmissor e o receptor não compartilham um sinal de clock comum. Apesar disso simplificar significativamente o protocolo, isso também impõe alguns requisitos para o transmissor e o receptor. Uma vez que eles não compartilham um, ambas as extremidades devem transmitir ao mesmo tempo e em velocidade predefinida para poder ter a mesma temporização de bits. As taxas de baud mais comuns utilizadas em UART atualmente são 4800, 9600, 19,2 K, 57,6 K e 115,2 K. Além de ter a mesma taxa de bauds, ambos os lados de uma conexão UART também têm que usar a mesma estrutura de frames e parâmetros. Essas configurações estão descritas na tabela abaixo:
+Uma das grandes vantagens do UART é que ele é assíncrono – o transmissor e o receptor não compartilham um sinal de clock comum. Apesar disso simplificar significativamente o protocolo, isso também impõe alguns requisitos para o transmissor e o receptor. Uma vez que eles não compartilham um sinal de clock comum, ambas as extremidades devem transmitir ao mesmo tempo e em velocidade predefinida para poder ter a mesma temporização de bits. Além de ter a mesma taxa de bauds, ambos os lados de uma conexão UART também têm que usar a mesma estrutura de frames e parâmetros. Portanto, para este problema, as configurações da UART de ambos os dispositivos foram definidas de maneira igual. Essas configurações estão descritas na tabela abaixo:
 
 
 ### Configuração de parâmetros
@@ -128,7 +135,7 @@ Uma das grandes vantagens do UART é que ele é assíncrono – o transmissor e 
 
 ### Pinos RX/TX
 
-Dessa forma, o pino TX da Raspberry envia dados para o pino RX do NodeMCU, que recebe esses dados. De maneira análoga, o pino TX do NodeMCU envia dados para o pino RX da Raspberry.
+O pino TX da Raspberry envia dados para o pino RX do NodeMCU, que recebe esses dados. De maneira análoga, o pino TX do NodeMCU envia dados para o pino RX da Raspberry.
 
 No problema, a comunicação funciona da seguinte forma: a Raspbery envia comandos de requisição para a NodeMCU através de códigos hexadecimais já estabelecidos, e o NodeMCU envia de volta comandos de resposta por um código também hexadecimal. Esses comandos de requisição são descritos nas tabelas abaixo:
 
@@ -212,6 +219,13 @@ O código do node MCU foi totalmente desenvolvido em linguagem C, sem utilizar a
 
 ## Testes e Simulações
 
-### SBC
-
-### NodeMCU
+### Testes do menu
+#### Case 1: Funcionamento do Node [OK]
+Retorna o estado do node adequadamente.
+#### Case 2: Medida da entrada analógica [OK]
+Mostra perfeitamente os valores num intervalo de 0 a 254.
+#### Case 3: Medida da entrada digital [!!!]
+- D0: O valor fica fixo em 1, independente do botão ser pressionado ou não.
+- D1: O valor altera perfeitamente de acordo com o pressionamento do botão .
+#### Case 4: Acionamento do led [OK]
+Foi implementada uma função de toggle que altera o estado do led e funciona adequadamente.
