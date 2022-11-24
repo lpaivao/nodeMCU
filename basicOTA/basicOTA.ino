@@ -6,17 +6,9 @@
 #include <gpio.h>
 #include <uart.h>
 
-// COMANDOS DE REQUISIÇÃO
-#define SITUACAO_ATUAL_NODE 0x03
-#define SOLICITA_ENTRADA_ANALOGICA 0x04
-#define SOLICITA_ENTRADA_DIGITAL 0x05
-#define ACENDE_LED 0x06
+#include "commands.h"
 
-// COMANDOS DE RESPOSTA
-#define NODE_COM_PROBLEMA 0x1F
-#define NODE_FUNCIONANDO 0x00
-#define MEDIDA_ENTRADA_ANALOGICA 0x01
-#define ESTADO_ENTRADA_DIGITAL 0x02
+#define __OTA__
 
 #ifndef STASSID
 #define STASSID "INTELBRAS"
@@ -25,6 +17,12 @@
 
 #define BAUDUART0 115200
 #define BAUDUART1 115200
+
+#ifdef __TESTING__
+#define LED_PIN 14
+#else
+#define LED_PIN LED_BUILTIN
+#endif
 
 const char *ssid = STASSID;
 const char *password = STAPSK;
@@ -43,13 +41,6 @@ enum sensor_type
 {
   DIGITAL,
   ANALOG
-};
-
-enum codes
-{
-  READ_DIGITAL = 'A',
-  READ_ANALOG = 'B',
-  NODE_STATUS = 'C'
 };
 
 // Estrutura contendo as referencias para uso de um sensor, tipo, funcão de leitura e configuração
@@ -79,28 +70,28 @@ int readDigitalSensor(int pin)
 
 int readAnalogSensor(int pin)
 {
-  return analogRead(pin);
+  return map(system_adc_read(), 0, 1023, 0, 254);
 }
 
 sensor DS0 = {
     DIGITAL,
     readDigitalSensor,
     0,
-    GPIO_PIN_ADDR(16),
+    D0,
     // setDigitalSensor,
 };
 sensor DS1 = {
     DIGITAL,
     readDigitalSensor,
     0,
-    GPIO_PIN_ADDR(5),
+    D1,
     // setDigitalSensor,
 };
 sensor AS0 = {
     ANALOG,
     readAnalogSensor,
     0,
-    GPIO_PIN_ADDR(17),
+    A0,
     // setDigitalSensor,
 };
 
@@ -109,13 +100,13 @@ void ota_startup()
   // Configuração do IP fixo no roteador, se não conectado, imprime mensagem de falha
   if (!WiFi.config(local_IP, gateway, subnet))
   {
-    Serial.println("STA Failed to configure");
+    ets_uart_printf("STA Failed to configure");
   }
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED)
   {
-    Serial.println("Connection Failed! Rebooting...");
+    ets_uart_printf("Connection Failed! Rebooting...\n");
     delay(5000);
     ESP.restart();
   }
@@ -130,29 +121,28 @@ void ota_startup()
     }
 
     // NOTE: if updating FS this would be the place to unmount FS using FS.end()
-    Serial.println("Start updating " + type); });
+    ets_uart_printf("Start updating %s\n", type); });
   ArduinoOTA.onEnd([]()
-                   { Serial.println("\nEnd"); });
+                   { ets_uart_printf("\nEnd\n"); });
   ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)
-                        { Serial.printf("Progress: %u%%\r", (progress / (total / 100))); });
+                        { ets_uart_printf("Progress: %u%%\r", (progress / (total / 100))); });
   ArduinoOTA.onError([](ota_error_t error)
                      {
-    Serial.printf("Error[%u]: ", error);
+    ets_uart_printf("Error[%u]: ", error);
     if (error == OTA_AUTH_ERROR) {
-      Serial.println("Auth Failed");
+      ets_uart_printf("Auth Failed\n");
     } else if (error == OTA_BEGIN_ERROR) {
-      Serial.println("Begin Failed");
+      ets_uart_printf("Begin Failed\n");
     } else if (error == OTA_CONNECT_ERROR) {
-      Serial.println("Connect Failed");
+      ets_uart_printf("Connect Failed\n");
     } else if (error == OTA_RECEIVE_ERROR) {
-      Serial.println("Receive Failed");
+      ets_uart_printf("Receive Failed\n");
     } else if (error == OTA_END_ERROR) {
-      Serial.println("End Failed");
+      ets_uart_printf("End Failed\n");
     } });
   ArduinoOTA.begin();
-  Serial.println("Ready");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+  ets_uart_printf("Ready\n");
+  ets_uart_printf("IP address: %s\n", WiFi.localIP());
 }
 
 void setupSensorMaps()
@@ -164,94 +154,103 @@ void setupSensorMaps()
   for (int i = 2; i < digital_sensors.total; i++)
   {
     digital_sensors.sensors[i] = &DS0;
-  } 
+  }
   analog_sensors.type = ANALOG;
   analog_sensors.installed = 1;
-  analog_sensors.sensors[0] = &AS0;
- // for (int i = 0; i < analog_sensors.total; i++)
- // {
+  for (int i = 0; i < analog_sensors.total; i++)
+  {
+    analog_sensors.sensors[i] = &AS0;
+  }
 }
 
-void gpioSetup()
+bool evalAddr(int *addr, int limit)
 {
-  // pinMode(D0, OUTPUT);
-  PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO5_U, GPIO_IN_ADDRESS);
-  PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO4_U, GPIO_IN_ADDRESS);
-  gpio_init();
+#ifdef __TESTING__
+  *addr = *addr - '0';
+#endif
+  if (*addr >= limit)
+  {
+    return false;
+  }
+  return true;
 }
 
 void setup()
 {
-  // Serial.begin(BAUDUART0);
   uart0 = uart_init(UART0, BAUDUART0, UART_8N1, 0, 1, 10, 0);
-
-  ets_uart_printf("\nBooting\r\n");
-  // ota_startup();
+  uart_write(uart0, "\nBooting\r\n", 6);
+#ifdef __OTA__
+  ota_startup();
+#endif
   setupSensorMaps();
-  ets_uart_printf("Ready\r\n");
-  ets_install_uart_printf();
+  uart_write(uart0, "\nReady\r\n", 6);
+  // pinMode(14, OUTPUT);
 }
 
 char *recByte = (char *)malloc(sizeof(char) * 2);
-char *sendByte = (char *)malloc(sizeof(char) * 1);
 int addr = 0;
 
 void loop()
 {
-  // ArduinoOTA.handle();
-  // if (Serial.available() > 0) {
-  //   Serial.print(Serial.read());
-  // }
-  while ((int)uart_rx_available(uart0) > 0)
+#ifdef __OTA__
+  ArduinoOTA.handle();
+#endif
+  while ((int)uart_rx_available(uart0) >= 2)
   {
-
-    uart_read(uart0, recByte, 2);
-         
-    switch (recByte[0])
+    if (uart_read(uart0, recByte, 2) == 2)
     {
-    case NODE_STATUS:
-      ets_uart_printf("Status Request:\n");
-      ets_putc('\n');
-      break;
-    case READ_ANALOG:
-      addr = recByte[1] - '0';
-      if (addr >= analog_sensors.installed)
-      {
-      ets_uart_printf("[ERROR] Analog Sensor\n");
-      ets_putc('\n');
-        break;
-      }
-      ets_uart_printf("Analog Sensor:\n");
-      ets_putc('\n');
-      break;
-    case READ_DIGITAL:
       addr = recByte[1];
-      if (addr >= digital_sensors.installed)
+#ifdef __TESTING__
+      addr = addr - '0';
+#endif
+      switch (recByte[0])
       {
-        ets_uart_printf("[ERROR] Digital Sensor\n");
-        ets_putc('\n');
+      case NODE_STATUS:
+        uart_write_char(uart0, NODE_NORMAL);
+        break;
+      case READ_ANALOG:
+        if (addr >= analog_sensors.installed)
+        {
+          break;
+        }
+        uart_write_char(uart0, ANALOG_READ);
+        uart_write_char(uart0, analog_sensors.sensors[addr]->read(A0));
+        break;
+      case READ_DIGITAL:
+        if (addr >= digital_sensors.installed)
+        {
+          break;
+        }
+        uart_write_char(uart0, DIGITAL_READ);
+#ifdef __TESTING__
+        uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin) + '0');
+#else
+        uart_write_char(uart0, digital_sensors.sensors[addr]->read(digital_sensors.sensors[addr]->pin));
+#endif
+        break;
+      case LED_TOGGLE:
+        if (addr >= 2)
+        {
+          break;
+        }
+        GPIO_OUTPUT_SET(LED_PIN, addr);
+        uart_write_char(uart0, NODE_NORMAL);
+        break;
+      case '\r':
+      case '\n':
+        break;
+      default:
+#ifdef __TESTING__
+        ets_uart_printf("[ NONE ] Skipping ...");
+#else
+        uart_write_char(uart0, NODE_SKIP);
+        uart_write_char(uart0, NODE_SKIP);
+#endif
         break;
       }
-      if (addr == GPIO_PIN_ADDR(16))
-      {
-        ets_uart_printf("Digital Sensor (1):\nLevel: ");
-        uart_write_char(uart0, GPIO_INPUT_GET(16) + '0');
-      }
-      else if (addr == GPIO_PIN_ADDR(5))
-      {
-        ets_uart_printf("Digital Sensor (2):\nLevel: ");
-        uart_write_char(uart0, GPIO_INPUT_GET(5) + '0');
-      }
-
-      ets_putc('\n');
-      ets_putc('\n');
-
-      break;
-    default:
-      ets_uart_printf("None\n");
-      ets_putc('\n');
-      break;
+#ifdef __TESTING__
+      uart_write_char(uart0, '\n');
+#endif
     }
-    uart_flush(uart0);
   }
 }
