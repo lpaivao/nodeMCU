@@ -1,7 +1,7 @@
 #include <stdio.h>
-#include <unistd.h>		//Used for UART
-#include <fcntl.h>		//Used for UART
-#include <termios.h>		//Used for UART
+#include <unistd.h>
+#include <fcntl.h>
+#include <termios.h>
 #include <time.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -13,7 +13,6 @@
 #define SOLICITA_ENTRADA_ANALOGICA 0x04
 #define SOLICITA_ENTRADA_DIGITAL 0x05
 #define ACENDE_LED 0x06
-#define DESLIGA_LED 0X07
 // COMANDOS DE RESPOSTA
 #define NODE_COM_PROBLEMA 0x1F
 #define NODE_FUNCIONANDO 0x00
@@ -43,7 +42,7 @@ void lcd(){
 	clear_lcd();
 }
 
-// Printar uma string no LCD
+// Mostrar uma string no LCD
 void print_lcd(unsigned char c[]){
         int len = strlen(c);
         
@@ -54,40 +53,25 @@ void print_lcd(unsigned char c[]){
 
 int uart0_filestream = -1;
 
+// Funcao que recebe os dados no rx
 void uart_rx(char *respostaNode)
 {
 	if (uart0_filestream != -1)
 	{
-		int rx_length = read(uart0_filestream, respostaNode, 2); // Filestream, buffer to store in, number of bytes to read (max)
-
-		if (rx_length < 0)
-		{
-			printf("An error occured\n");
-		}
-		else if (rx_length == 0)
-		{
-			printf("No data waiting\n");
-		}
-		else
-		{
-			// Bytes received
-			printf("%i bytes read : %s\n", rx_length, respostaNode);
-		}
+		read(uart0_filestream, respostaNode, 2); // Filestream, buffer to store in, number of bytes to read (max)
+	}
+	else
+	{
+		printf("\nFalha na abertura do arquivo\n");
 	}
 }
 
-// Funcao que envia os dados na UART
+// Funcao que envia os dados pelo tx
 void uart_tx(char *tx_string)
 {
 	if (uart0_filestream != -1)
 	{
-		int written_bits_length = write(uart0_filestream, tx_string, 2);
-		if (written_bits_length == -1)
-		{
-			printf("uart_tx() nao funcionou\n");
-		}
-		else
-			printf("uart_tx() funcionou e escreveu %i bytes\n", written_bits_length);
+		write(uart0_filestream, tx_string, 2);
 	}
 	else
 	{
@@ -99,13 +83,6 @@ void uart_tx(char *tx_string)
 void serialFlush ()
 {
   tcflush (uart0_filestream, TCIOFLUSH) ;
-}
-
-//Display code begin
-void delay(int number_of_seconds){
-    int mili = 1000*number_of_seconds;
-    clock_t start_time = clock();
-    while(clock() < start_time + mili);
 }
 
 // Configuração da comunicação UART
@@ -130,6 +107,7 @@ bool uart_config(){
 	return true;
 }
 
+// Inicio das mensagens para o LCD
 void sendNodeFuncionando()
 {
 	print_lcd("NODE OK");
@@ -140,8 +118,10 @@ void sendNodeProblema()
 }
 void sendEntradaAnalogica(char *valorAnalogico)
 {
+	char buffer[20];
+	sprintf(buffer, "%d", *valorAnalogico);
 	print_lcd("Analogico: ");
-	write_char(*valorAnalogico + '0');
+	print_lcd(buffer);
 }
 void sendEntradaDigital(char *estado)
 {
@@ -152,7 +132,11 @@ void sendErro()
 {
 	print_lcd("ERRO");
 }
+// Fim das mensagens para o LCD
 
+// Submenu para escolha do sensor digital
+// D0 = 16
+// D1 = 5
 void escolhaDigital(char *respostaNode)
 {
 	char requisicaoRaspDigital[2];
@@ -175,7 +159,7 @@ void escolhaDigital(char *respostaNode)
 
 		if ((respostaNode[0] == ESTADO_ENTRADA_DIGITAL))
 		{
-			sendEntradaDigital(respostaNode[1]);
+			sendEntradaDigital(&respostaNode[1]);
 		}
 		else
 			sendErro();
@@ -193,7 +177,7 @@ void escolhaDigital(char *respostaNode)
 
 		if ((respostaNode[0] == ESTADO_ENTRADA_DIGITAL))
 		{
-			sendEntradaDigital(respostaNode[1]);
+			sendEntradaDigital(&respostaNode[1]);
 		}
 		else
 			sendErro();
@@ -203,6 +187,8 @@ void escolhaDigital(char *respostaNode)
 		break;
 	}
 }
+
+// Menu principal
 void menu()
 {
 	
@@ -228,6 +214,7 @@ void menu()
 
 		switch (opcao)
 		{
+		// Opcao de situacao do NodeMCU
 		case 1:
 			serialFlush();
 			requisicaoRasp[0] = SITUACAO_ATUAL_NODE;
@@ -246,6 +233,7 @@ void menu()
 			else
 				sendErro();
 			break;
+		// Opcao de medida da entrada analogica
 		case 2:
 			serialFlush();
 			requisicaoRasp[0] = SOLICITA_ENTRADA_ANALOGICA;
@@ -257,21 +245,23 @@ void menu()
 
 			if (respostaNode[0] == MEDIDA_ENTRADA_ANALOGICA)
 			{	
-				sendEntradaAnalogica(respostaNode[1]);
+				sendEntradaAnalogica(&respostaNode[1]);
 			}
 			else
 				sendErro();
 			break;
+		// Opcao de medida da entrada digital, que leva a um submenu
 		case 3:
 			serialFlush();
 			escolhaDigital(respostaNode);
 			break;
+		// Opcao de toggle do led da NodeMCU
 		case 4:
 			serialFlush();
 			requisicaoRasp[0] = ACENDE_LED;
 			requisicaoRasp[1] = estado_led;			
 			uart_tx(requisicaoRasp);
-			estado_led?print_lcd("Led Ligado"):print_lcd("Led Desligado");
+			estado_led?print_lcd("Led Desligado"):print_lcd("Led Ligado");
 			estado_led = !estado_led;
 			break;
 		case 5:
