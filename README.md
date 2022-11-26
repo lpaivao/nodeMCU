@@ -78,11 +78,15 @@ Esta plataforma é composta basicamente por um chip controlador (ESP8266 ESP-12E
 
 ### Pinos Utilizados
 
-- GPIO 16 (D0) - Input -> Botão 0
-- GPIO 05 (D1) - Input -> Botão 1
-- A0 (Analógico) - Output -> Potenciômetro
-- TXD0
-- RXD0
+
+| Pino  	| Modo | Correspondente	|
+| ------------- | ------------- | ------------- |
+| GPIO 16  	| Input |  Botão 0 (D0)	|
+| GPIO 05  	| Input |  Botão 1 (D1)	|
+| A0  	| Input |  Potenciômetro|
+| TX0  	| Output |  RX0 (SBC)	|
+| RX0  	| Input |  TX0 (SBC)	|
+
 ### OTA (Over the air)
 Através do NodeMCU há a possibilidade de fazer a programação da placa via OTA (Over The Air), ou seja, através do WiFi pode se enviar os códigos para a placa. Inclusive, o código do problema possui configurações para seu uso no LARSID - UEFS, com IP fixo para a rede INTELBRAS.
 
@@ -109,14 +113,17 @@ O SBC utilizado para este problema foi a Raspberry Pi Zero W.
 
 ### Pinos Utilizados
 
-- GPIO 12 - Output -> D4 (LCD)
-- GPIO 16 - Output -> D5 (LCD)
-- GPIO 20 - Output -> D6 (LCD)
-- GPIO 21 - Output -> D7 (LCD)
-- GPIO 01 - Output -> E (LCD)
-- GPIO 25 - Output -> RS (LCD)
-- TXD0
-- RXD0
+
+| Pino  	| Modo | Correspondente	|
+| ------------- | ------------- | ------------- |
+| GPIO 12  	| Output |  D4 (LCD)	|
+| GPIO 16  	| Output |  D5 (LCD)	|
+| GPIO 20  	| Output |  D6 (LCD)	|
+| GPIO 21  	| Output |  D7 (LCD)	|
+| GPIO 01 	| Output |  EN (LCD)	|
+| GPIO 25  	| Output |  RS (LCD)	|
+| TX0  	| Output |  RX (Node)	|
+| RX0  	| Input |  TX (Node)	|
 
 ## Protocolo de comunicação - UART
 O SBC precisa se comunicar com o NodeMCU através de um protocoloco de comunicação chamado UART (Universal Asynchronous Receiver / Transmitter).  O UART é muito simples e utiliza somente dois fios entre o transmissor e o receptor para transmitir e receber em ambas as direções.
@@ -170,20 +177,35 @@ Esse editor de texto foi utilizado somente para a escrita do código em C, que p
 
 O código da raspberry foi totalmente desenvolvido em linguagem C. Foi utilizada a biblioteca [Termios](https://pubs.opengroup.org/onlinepubs/7908799/xsh/termios.h.html) (termios.h) para a utilização da comunicação UART, que contém as definições usadas pela interface do terminal de entrada/saída.
 
-- Funções e suas funcionalidades
+- Funções principais e suas funcionalidades
 
 | Função 	| O que faz |
 | ------------- | ------------- |
-| open()  |  Abre o arquivo da porta UART|
-| write()  | Envia os bytes para o buffer TX (*Termios*)|
-| read()   | Lê os bytes do buffer RX (*Termios*)|
+| open()  |  Abre o arquivo da porta UART (*syscall*)|
+| close()  |  Fecha o arquivo da porta UART (*syscall*)|
+| write()  | Envia os bytes para o buffer TX (*syscall*)|
+| read()   | Lê os bytes do buffer RX (*syscall*)|
 | uart_tx()  | Envia os bytes para o buffer TX; utiliza write() |
 | uart_rx()   | Lê os bytes do buffer RX; utiliza read() |
 | usleep()  |  Delay em nanosegundos|
 | menu()  | Menu que fica em loop com as opções para o usuário|
-| printLcd()  | Envia uma string ao display |
-| clear()  | Limpa o display |
 
+- Funcões do display LCD
+
+| Função 	| O que faz |
+| ------------- | ------------- |
+| memory_map()  | Faz o mapeamento de memória |
+| init_lcd()  | Inicializa o display |
+| clear_lcd()  | Limpa o display |
+| printLcd()  | Envia uma string ao display |
+
+Para inicializar as funcões do display, deve se chamar primeiro as seguintes funçõs:
+
+```c
+memory_map();
+init_lcd();
+clear_lcd();
+```
 
 ### Makefile
 
