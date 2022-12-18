@@ -172,6 +172,22 @@ A IDE foi configurada de forma a instalar e configurar todas as dependências, b
 ### *Visual Studio Code* (VSCode)
 Esse editor de texto foi utilizado somente para a escrita do código em C, que posteriormente seria introduzido no código do *Arduino IDE* para a compilação no sketch.
 
+## Produto Desenvolvido - Protocolo de comunicação sobre UART 
+O Protocolo de comunicação desenvolvido procurou atender às restrições do problema usando as seguintes regras:
+1. As mensagens de requisições sempre têm 2 bytes apenas.
+2. As mensagens de resposta têm 2 bytes, exceto em caso de múltiplas amostragens (histórico).
+3. Os dados de uma amostragem tem apenas 1 byte em um determinado instante.
+
+As mensagens de requisição seguem o padrão: comando, endereço; para solicitações de medidas digitais ou analógicas, mas para o caso do controle do LED, o padrão é comando no byte 1 e estado (ligado ou desligado) para o byte 2, e ainda para o caso de solicitação de status do nodeMCU, o primeiro byte é o comando e o segundo é obrigatoriamente lido mas ignorado. A figura a seguir demonstra uma solicitação de leitura digital e uma solicitação para ligar o led.
+
+![Exemplo de mensagens](/imagens/protocolocomando.png)
+
+
+O nodeMCU contém um ADC com resolução de 10bits, portando os valores medidos podem estar numa faixa de 0 a 1023 (em decimal), portanto é necessário uma diminuição de resolução para transimssão, assumindo a perda de informação para tanto, isso é realizado dentro do nodeMCU através de uma função que mapeia os valores de 10bits para 8bits (1byte), conformando o valor para o protocolo, como ilustrado na figura a seguir.
+
+![Fluxo de resposta de medida analógica](/imagens/medidaanalogica.png)
+
+
 
 ## Produto Desenvolvido (SBC)
 
@@ -238,6 +254,26 @@ O código do node MCU foi totalmente desenvolvido em linguagem C, sem utilizar a
 | readAnalogSensor()  | Retorna o pino do sensor analógico |
 | uart_write_char() | Envia um byte para o buffer TX |
 | uart_read()   | Lê os bytes do buffer RX |
+
+### Mapeamento de sensores
+
+O mapeamento de endereços de sensores utilizado no protocolo de comunicação do problema foi feito através da lógica de que o endereço solicitado no protocolo é, na prática, o índice do vetor que contém as definições dos sensores no nodeMCU, ou seja, os sensores estão organizados em um vetor (array) no nodeMCU, e os índices desse vetor (que não representam os endereços de memória física) são interpretados como endereço para o protocolo de comunicação, por exemplo: o sensor digital de nome D2 está posicionado no índice 2 do vetor de sensores digitais, portanto a solicitação terá o 2 como endereço do comando de medidas digitais.
+
+A figura a seguir demonstra como o mapeamento funciona.
+
+![Mapeamento de sensores](/imagens/mapsensores.png)
+
+### Representação dos sensores
+
+Os sensores e o vetor de sensores na verdade são duas estruturas, a primeira descreve o sensor através de seu tipo (Digital ou Analógico), qual o pino a que esse sensor está associado e qual a função que executa a sua leitura.
+
+Esses sensores estão organizados em duas estruturas, uma para os sensores digitais, outra para sensores analógicos, que contém a quantidade de sensores ativos naquele nodeMCU, qual o tipo desses sensores e o vetor em si.
+
+A organização em estruturas e o uso de ponteiros para funções de leitura dão ao código uma grande flexibilidade permitindo implementação de variadas formas de comunicação com os sensores e a abstração desses detalhes para o protocolo de comunicação com o SBC.
+
+A figura a seguir descreve as estruturas:
+
+![Estruturas de sensores e mapas](/imagens/structs.png)
 
 ## Testes e Simulações
 
